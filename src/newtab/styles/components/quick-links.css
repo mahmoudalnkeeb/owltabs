@@ -7,7 +7,7 @@
   flex-wrap: wrap;
   gap: var(--sp-3);
   justify-content: center;
-  max-width: var(--omnibox-width);
+  width: min(var(--omnibox-width), calc(100vw - 48px));
   margin: 0 auto;
 }
 

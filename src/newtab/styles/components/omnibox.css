@@ -3,7 +3,7 @@
    ============================================================ */
 
 .omnibox {
-  max-width: var(--omnibox-width);
+  width: min(var(--omnibox-width), calc(100vw - 48px));
   margin: 0 auto;
   background: var(--surface-1);
   border: 1px solid var(--border-default);
@@ -13,13 +13,12 @@
   transition:
     box-shadow var(--dur-base) var(--ease-out),
     border-color var(--dur-base),
-    max-width var(--dur-slow) var(--ease-out),
+    box-sizing var(--dur-slow) var(--ease-out),
     transform var(--dur-slow) var(--ease-out);
 }
 .omnibox:focus-within {
   border-color: var(--border-strong);
   box-shadow: var(--omnibox-shadow-focus);
-  max-width: calc(var(--omnibox-width) + 40px);
   transform: scale(1.01);
 }
 .omnibox[data-mode="feed"]:focus-within {
