@@ -5,9 +5,9 @@
 
 :root {
   /* ---------- Layout geometry ---------- */
-  --nt-content-width: 1040px; /* max-width for center column */
+  --nt-content-width: 1320px; /* max-width for center column */
   --nt-topbar-height: 52px; /* sticky topbar */
-  --nt-hero-pb: 48px; /* padding-bottom of hero zone */
+  --nt-hero-pb: 32px; /* padding-bottom of hero zone */
   --nt-section-gap: 40px; /* vertical gap between page sections */
 
   /* ---------- Omnibox ---------- */
@@ -25,7 +25,7 @@
   --ql-label-size: 11px;
 
   /* ---------- Feed ---------- */
-  --feed-cols: 3; /* overridden by settings: 2 | 3 | 4 */
+  --feed-cols: 4; /* overridden by settings: 2 | 3 | 4 */
   --feed-card-radius: var(--r-lg);
   --feed-thumb-aspect: 56.25%; /* 16:9 */
   --feed-favicon-size: 14px;

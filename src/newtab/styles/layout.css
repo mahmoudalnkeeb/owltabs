@@ -48,11 +48,11 @@ body {
 
 /* hero zone */
 .nt-hero {
-  padding: 64px var(--sp-6) var(--nt-hero-pb);
+  padding: 40px var(--sp-6) var(--nt-hero-pb);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--sp-8);
+  gap: var(--sp-6);
 }
 
 /* feed zone — fills remainder */
@@ -61,7 +61,7 @@ body {
   max-width: var(--nt-content-width);
   width: 100%;
   margin: 0 auto;
-  padding: 0 var(--sp-6) var(--sp-16);
+  padding: 0 var(--sp-6) var(--sp-10);
 }
 
 /* feed grid */
@@ -72,12 +72,17 @@ body {
 }
 
 /* Responsive breakpoints */
-@media (max-width: 1199px) {
+@media (max-width: 1279px) {
+  :root {
+    --feed-cols: 3;
+  }
+}
+@media (max-width: 959px) {
   :root {
     --feed-cols: 2;
   }
 }
-@media (max-width: 959px) {
+@media (max-width: 640px) {
   :root {
     --feed-cols: 1;
   }

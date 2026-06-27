@@ -5,7 +5,7 @@ import { relativeTime } from "../services/rss";
 import { $, $$, escapeHtml, svgIcon, showToast } from "../utils";
 import { getDomain, resolveFavicons } from "../services/favicon";
 
-const ITEMS_PER_PAGE = 12;
+const ITEMS_PER_PAGE = 16;
 
 let currentFeedSettings: SyncStorageSettings | null = null;
 let faviconCache = new Map<string, string | null>();
