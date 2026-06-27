@@ -34,12 +34,25 @@ import { migrateIfNeeded } from "./services/migrate";
 
 function applyAppearance(settings: Awaited<ReturnType<typeof storage.getSettings>>) {
   const { appearance } = settings;
-  document.documentElement.style.setProperty("--feed-cols", String(appearance.feedColumns));
+  applyFeedColumns(appearance.feedColumns);
   document.documentElement.style.setProperty("font-size", `${appearance.fontScale * 100}%`);
   if (appearance.accentColor) {
     document.documentElement.style.setProperty("--accent", appearance.accentColor);
   }
   document.body.classList.toggle("grayscale", !!appearance.grayscale);
+}
+
+function applyFeedColumns(pref: 2 | 3 | 4) {
+  const w = window.innerWidth;
+  // On narrow viewports, let CSS media queries decide — remove the inline
+  // override so the responsive fallback in layout.css takes effect.
+  if (w < 960 && pref > 1) {
+    document.documentElement.style.removeProperty("--feed-cols");
+  } else if (w < 1280 && pref > 3) {
+    document.documentElement.style.setProperty("--feed-cols", "3");
+  } else {
+    document.documentElement.style.setProperty("--feed-cols", String(pref));
+  }
 }
 
 async function mergeSavedStatus(items: FeedItem[]) {
@@ -146,6 +159,13 @@ async function init() {
     // Backdrop click to close
     document.getElementById("nt-backdrop")?.addEventListener("click", () => {
       uiStore.set((s) => ({ ...s, aiPanelOpen: false, settingsOpen: false }));
+    });
+
+    // Responsive feed columns on resize
+    let resizeTimer: ReturnType<typeof setTimeout>;
+    window.addEventListener("resize", () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => applyFeedColumns(settings.appearance.feedColumns), 100);
     });
 
     // Spotlight — dim page when omnibox is focused
