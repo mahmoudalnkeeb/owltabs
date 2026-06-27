@@ -8,7 +8,7 @@
   gap: var(--sp-3);
   justify-content: center;
   max-width: var(--omnibox-width);
-  width: 100%;
+  margin: 0 auto;
 }
 
 .ql-tile {

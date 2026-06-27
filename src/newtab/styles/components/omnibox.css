@@ -3,8 +3,8 @@
    ============================================================ */
 
 .omnibox {
-  width: 100%;
   max-width: var(--omnibox-width);
+  margin: 0 auto;
   background: var(--surface-1);
   border: 1px solid var(--border-default);
   border-radius: var(--omnibox-radius);
