@@ -205,6 +205,35 @@ body {
   border-radius: var(--r-xs);
 }
 
+/* Icon button (shared across feed, settings, etc.) */
+.nt-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-sm);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-standard),
+    color       var(--dur-fast) var(--ease-standard);
+}
+.nt-icon-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+.nt-icon-btn:active {
+  background: var(--surface-selected);
+  transform: scale(0.93);
+}
+.nt-icon-btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
 /* Mini button */
 .mini-btn {
   padding: 6px;
