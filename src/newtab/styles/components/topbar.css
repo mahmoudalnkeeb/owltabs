@@ -1,27 +1,29 @@
 /* ============================================================
-   topbar.css — Part 4.1
+   topbar.css — Vesper Agentic topbar
    ============================================================ */
 
-.nt-topbar-left {
+/* ─── Clock ────────────────────────────────────────────── */
+
+.topbar-clock {
   display: flex;
   align-items: baseline;
-  gap: var(--sp-3);
+  gap: var(--sp-2);
+  user-select: none;
 }
 
-.nt-clock {
-  font-size: 19px;
-  font-weight: 300;
-  letter-spacing: -0.01em;
+.clock-time {
+  font: 500 15px/1 var(--font-mono);
   color: var(--text-primary);
+  letter-spacing: 0.01em;
   font-variant-numeric: tabular-nums;
   display: inline-flex;
   align-items: baseline;
 }
-.nt-clock-digit {
+
+.clock-digit {
   display: inline-block;
-  transition: opacity 0.15s ease, transform 0.15s ease;
 }
-.nt-clock-digit.is-changed {
+.clock-digit.is-changed {
   animation: digitFlip 0.25s var(--ease-out);
 }
 @keyframes digitFlip {
@@ -35,90 +37,123 @@
   }
 }
 
-.nt-date {
-  font-family: var(--font-mono);
-  font-size: 11px;
+.clock-sep {
   color: var(--text-disabled);
+  font-size: 11px;
+  line-height: 1;
 }
 
-.nt-topbar-right {
+.clock-date {
+  font: 400 11px/1 var(--font-mono);
+  color: var(--text-tertiary);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+
+/* ─── Right controls ───────────────────────────────────── */
+
+.topbar-controls {
   display: flex;
   align-items: center;
   gap: var(--sp-2);
 }
 
-.nt-icon-btn {
-  appearance: none;
-  background: transparent;
-  border: none;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--r-sm);
-  display: grid;
-  place-items: center;
+
+/* ─── AI assistant pill ─────────────────────────────────── */
+
+.topbar-ai-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 13px 6px 10px;
+  border-radius: var(--r-full);
+  border: 1px solid rgba(255, 199, 153, 0.2);
+  background: rgba(255, 199, 153, 0.06);
+  color: var(--accent);
+  font: 500 12px/1 var(--font-sans);
+  letter-spacing: 0.01em;
   cursor: pointer;
-  color: var(--text-tertiary);
+  white-space: nowrap;
   transition:
-    background var(--dur-base) var(--ease-standard),
-    color var(--dur-base);
+    background  var(--dur-base) var(--ease-standard),
+    border-color var(--dur-base) var(--ease-standard),
+    box-shadow  var(--dur-base) var(--ease-standard);
 }
-.nt-icon-btn:hover {
-  background: var(--surface-1);
-  color: var(--text-secondary);
+.topbar-ai-btn:hover {
+  background:   rgba(255, 199, 153, 0.13);
+  border-color: rgba(255, 199, 153, 0.38);
+  box-shadow:
+    0 0 0 1px rgba(255, 199, 153, 0.08),
+    0 2px 14px  rgba(255, 199, 153, 0.07);
 }
-.nt-icon-btn:focus-visible {
+.topbar-ai-btn:active {
+  background: rgba(255, 199, 153, 0.18);
+  transform: scale(0.97);
+}
+.topbar-ai-btn:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
-/* Orb */
-.orb-wrap {
-  position: relative;
-  width: var(--orb-size, 22px);
-  height: var(--orb-size, 22px);
-  flex: 0 0 auto;
-  display: grid;
-  place-items: center;
-  cursor: text;
+.topbar-ai-icon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  color: var(--accent);
+  animation: aiBreath 2.8s var(--ease-breath) infinite;
 }
-.orb {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: var(--surface-2);
-  border: 1px solid var(--border-default);
-  transition:
-    border-color var(--dur-base) var(--ease-standard),
-    background var(--dur-base);
-}
-.orb::before {
-  content: "";
-  position: absolute;
-  inset: -2px;
-  border-radius: 50%;
-  background: conic-gradient(from 0deg, var(--accent), var(--mint), var(--accent));
-  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 2px));
-  mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 2px));
-  animation: orb-spin 3s linear infinite;
-  opacity: 0;
-  transition: opacity var(--dur-slow) var(--ease-standard);
-}
-.orb-wrap.is-active .orb {
-  border-color: transparent;
-  background: var(--surface-2);
-}
-.orb-wrap.is-active .orb::before {
-  opacity: 0.75;
-  animation-duration: 2s;
-}
-.orb-wrap.is-listening .orb::before {
-  opacity: 1;
-  animation-duration: 1s;
+@keyframes aiBreath {
+  0%, 100% { opacity: 1;    transform: scale(1);    }
+  50%       { opacity: 0.5; transform: scale(0.84); }
 }
 
-@keyframes orb-spin {
-  to { transform: rotate(360deg); }
+
+/* ─── Vertical divider ─────────────────────────────────── */
+
+.topbar-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--border-default);
+  flex-shrink: 0;
+}
+
+
+/* ─── Generic icon button (settings) ───────────────────── */
+
+.topbar-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-sm);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-standard),
+    color       var(--dur-fast) var(--ease-standard);
+}
+.topbar-icon-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+.topbar-icon-btn:active {
+  background: var(--surface-selected);
+  transform: scale(0.93);
+}
+.topbar-icon-btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+
+/* ─── Reduced-motion ───────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .topbar-ai-icon  { animation: none; }
+  .topbar-ai-btn,
+  .topbar-icon-btn { transition: none; }
 }

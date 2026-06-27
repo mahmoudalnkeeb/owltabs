@@ -13,23 +13,34 @@ body {
   position: relative;
 }
 
-.nt-topbar {
+.topbar {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  height: var(--nt-topbar-height);
-  background: var(--surface-0);
-  border-bottom: 1px solid var(--border-subtle);
+  z-index: var(--z-topbar);
+
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 var(--sp-6);
-  z-index: var(--z-topbar);
+  padding: 13px var(--sp-6);
+
+  background: linear-gradient(
+    to bottom,
+    rgba(8, 8, 8, 0.65) 0%,
+    transparent 100%
+  );
+
+  animation: topbarIn var(--dur-deliberate) var(--ease-out) both;
+}
+
+@keyframes topbarIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .nt-main {
-  padding-top: var(--nt-topbar-height);
+  padding-top: 56px;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
