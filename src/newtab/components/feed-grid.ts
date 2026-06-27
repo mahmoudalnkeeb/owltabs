@@ -10,13 +10,41 @@ const ITEMS_PER_PAGE = 16;
 let currentFeedSettings: SyncStorageSettings | null = null;
 let faviconCache = new Map<string, string | null>();
 
+// Track cards that have already played their entrance animation
+const animatedIds = new Set<string>();
+let observer: IntersectionObserver | null = null;
+
 export function setFeedSettings(settings: SyncStorageSettings) {
   currentFeedSettings = settings;
+}
+
+function setupObserver() {
+  if (observer) return;
+  observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        const card = entry.target as HTMLElement;
+        const id = card.dataset.id;
+        if (id && !animatedIds.has(id)) {
+          animatedIds.add(id);
+          // Stagger based on position within the current batch of un-animated cards
+          const idx = [...document.querySelectorAll<HTMLElement>(".feed-card:not(.is-skeleton)")].indexOf(card);
+          card.style.animationDelay = `${Math.max(0, idx % ITEMS_PER_PAGE) * 50}ms`;
+          card.classList.add("is-visible");
+        }
+        observer!.unobserve(card);
+      }
+    },
+    { rootMargin: "100px 0px", threshold: 0.01 }
+  );
 }
 
 export function renderFeedGrid() {
   const grid = $("#nt-feed-grid");
   if (!grid) return;
+
+  setupObserver();
 
   grid.innerHTML = Array.from({ length: 6 })
     .map(() => `
@@ -78,11 +106,15 @@ export function renderFeedGrid() {
     const paginationHtml = paginate(page, totalPages);
     grid.innerHTML = cardsHtml + paginationHtml;
 
-    // Staggered entrance — each card fades in with offset delay
-    grid.querySelectorAll<HTMLElement>(".feed-card:not(.is-skeleton)").forEach((card, idx) => {
-      card.style.animationDelay = `${idx * 60}ms`;
-      // Trigger reflow so animation plays after innerHTML insert
-      requestAnimationFrame(() => card.classList.add("is-visible"));
+    // Observe all cards — IntersectionObserver handles animation
+    grid.querySelectorAll<HTMLElement>(".feed-card:not(.is-skeleton)").forEach((card) => {
+      const id = card.dataset.id;
+      if (id && animatedIds.has(id)) {
+        // Already animated — show immediately, no animation
+        card.classList.add("is-animated");
+      } else if (observer) {
+        observer.observe(card);
+      }
     });
 
     // Update read count badge

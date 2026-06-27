@@ -19,6 +19,10 @@
 .feed-card.is-visible {
   animation: cardEnter 0.4s var(--ease-out) forwards;
 }
+/* Already animated — show immediately, no animation replay */
+.feed-card.is-animated {
+  opacity: 1;
+}
 @keyframes cardEnter {
   from {
     opacity: 0;
