@@ -1,0 +1,108 @@
+/* ============================================================
+   quick-links.css — Part 4.3
+   ============================================================ */
+
+.ql-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  justify-content: center;
+  max-width: var(--omnibox-width);
+  width: 100%;
+}
+
+.ql-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  min-width: 64px;
+  transition: background var(--dur-base) var(--ease-standard);
+  -webkit-user-drag: none;
+}
+.ql-tile:hover {
+  background: var(--surface-1);
+}
+.ql-tile:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--r-md);
+}
+
+.ql-icon {
+  width: var(--ql-tile-size);
+  height: var(--ql-tile-size);
+  border-radius: var(--ql-tile-radius);
+  background: var(--surface-1);
+  border: 1px solid var(--border-default);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  transition: border-color var(--dur-fast);
+}
+.ql-tile:hover .ql-icon {
+  border-color: var(--border-strong);
+}
+
+.ql-icon img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  transition: filter var(--dur-base) var(--ease-standard);
+}
+
+.ql-icon-fallback {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.ql-label {
+  font-size: var(--ql-label-size);
+  color: var(--text-secondary);
+  max-width: 56px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-sans);
+}
+
+.ql-icon--add {
+  background: transparent;
+  border-style: dashed;
+  color: var(--text-disabled);
+}
+.ql-tile.ql-add:hover .ql-icon--add {
+  border-color: var(--accent);
+  color: var(--accent);
+  border-style: solid;
+}
+
+/* Inline add popover */
+.ql-add-popover {
+  position: absolute;
+  background: var(--surface-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  padding: var(--sp-4);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  z-index: var(--z-omnibox);
+  min-width: 280px;
+}
+.ql-add-popover[hidden] {
+  display: none;
+}
+.ql-add-popover .field {
+  background: var(--surface-1);
+}

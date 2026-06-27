@@ -1,0 +1,53 @@
+/* ============================================================
+   VESPER NEWTAB — Extension-specific design tokens
+   Extends: tokens.css (Vesper Agentic v1.0.0)
+   ============================================================ */
+
+:root {
+  /* ---------- Layout geometry ---------- */
+  --nt-content-width: 1040px; /* max-width for center column */
+  --nt-topbar-height: 52px; /* sticky topbar */
+  --nt-hero-pb: 48px; /* padding-bottom of hero zone */
+  --nt-section-gap: 40px; /* vertical gap between page sections */
+
+  /* ---------- Omnibox ---------- */
+  --omnibox-width: 620px;
+  --omnibox-height: 52px; /* inner input row height */
+  --omnibox-radius: var(--r-xl);
+  --omnibox-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  --omnibox-shadow-focus:
+    0 24px 80px rgba(0, 0, 0, 0.45), 0 0 0 1px var(--accent);
+
+  /* ---------- Quick Links ---------- */
+  --ql-cols: 6; /* default columns (overridden by JS) */
+  --ql-tile-size: 44px; /* favicon tile width/height */
+  --ql-tile-radius: var(--r-md);
+  --ql-label-size: 11px;
+
+  /* ---------- Feed ---------- */
+  --feed-cols: 3; /* overridden by settings: 2 | 3 | 4 */
+  --feed-card-radius: var(--r-lg);
+  --feed-thumb-aspect: 56.25%; /* 16:9 */
+  --feed-favicon-size: 14px;
+
+  /* ---------- AI Panel ---------- */
+  --ai-panel-width: 380px;
+  --ai-panel-shadow: -12px 0 48px rgba(0, 0, 0, 0.5);
+  --ai-orb-size: 28px; /* topbar orb */
+  --ai-msg-radius: var(--r-md);
+
+  /* ---------- Settings Drawer ---------- */
+  --settings-width: 440px;
+  --settings-shadow: -8px 0 32px rgba(0, 0, 0, 0.45);
+
+  /* ---------- Skeleton / loading ---------- */
+  --skeleton-base: var(--surface-2);
+  --skeleton-shine: #282828;
+
+  /* ---------- Backdrop ---------- */
+  --backdrop: rgba(0, 0, 0, 0.6);
+  --backdrop-blur: blur(4px);
+
+  /* ---------- Page background — static base (animated via ambientShift) */
+  --nt-bg: var(--surface-0);
+}

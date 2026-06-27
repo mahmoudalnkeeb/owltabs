@@ -1,0 +1,3676 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      Vesper Agentic — Design System for AI-Native Browser Homepages
+    </title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap");
+
+      /* ============================================================
+   TOKENS
+   ============================================================ */
+      :root {
+        /* Surfaces */
+        --surface-0: #101010;
+        --surface-1: #161616;
+        --surface-2: #1c1c1c;
+        --surface-3: #202020;
+        --surface-selected: #232323;
+        --surface-hover: #282828;
+        --scrollbar: #343434;
+        --scrollbar-soft: #34343480;
+
+        /* Borders */
+        --border-subtle: #1d1d1d;
+        --border-default: #282828;
+        --border-strong: #343434;
+
+        /* Text */
+        --text-primary: #ffffff;
+        --text-secondary: #a0a0a0;
+        --text-tertiary: #7e7e7e;
+        --text-disabled: #505050;
+        --text-on-accent: #000000;
+
+        /* Accent — peppermint orange (primary / agent) */
+        --accent: #ffc799;
+        --accent-hover: #ffcfa8;
+        --accent-soft: #ffc79926;
+        --accent-softer: #ffc79914;
+
+        /* Mint — positive / safe / read-only */
+        --mint: #99ffe4;
+        --mint-soft: #99ffe426;
+        --mint-softer: #99ffe415;
+
+        /* Red — negative / destructive */
+        --red: #ff8080;
+        --red-soft: #ff808026;
+        --red-softer: #ff808015;
+
+        --selection: #ffffff25;
+
+        /* Radius */
+        --r-xs: 4px;
+        --r-sm: 6px;
+        --r-md: 10px;
+        --r-lg: 14px;
+        --r-xl: 20px;
+        --r-full: 999px;
+
+        /* Space */
+        --sp-1: 4px;
+        --sp-2: 8px;
+        --sp-3: 12px;
+        --sp-4: 16px;
+        --sp-5: 20px;
+        --sp-6: 24px;
+        --sp-8: 32px;
+        --sp-10: 40px;
+        --sp-12: 48px;
+        --sp-16: 64px;
+        --sp-20: 80px;
+
+        /* Motion */
+        --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+        --ease-out: cubic-bezier(0, 0, 0.2, 1);
+        --ease-in: cubic-bezier(0.4, 0, 1, 1);
+        --ease-breath: cubic-bezier(0.45, 0, 0.55, 1);
+        --dur-instant: 80ms;
+        --dur-fast: 120ms;
+        --dur-base: 200ms;
+        --dur-slow: 320ms;
+        --dur-deliberate: 480ms;
+
+        /* Type */
+        --font-sans:
+          "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --font-mono:
+          "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      }
+
+      /* ============================================================
+   RESET / BASE
+   ============================================================ */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--surface-0);
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      ::selection {
+        background: var(--selection);
+        color: var(--text-primary);
+      }
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+      ::-webkit-scrollbar-track {
+        background: var(--surface-0);
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--scrollbar-soft);
+        border-radius: var(--r-full);
+        border: 2px solid var(--surface-0);
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--scrollbar);
+      }
+      * {
+        scrollbar-color: var(--scrollbar-soft) var(--surface-0);
+        scrollbar-width: thin;
+      }
+
+      a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      a:hover {
+        color: var(--accent-hover);
+        text-decoration: underline;
+      }
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-weight: 600;
+        margin: 0;
+        letter-spacing: -0.01em;
+      }
+      p {
+        margin: 0;
+      }
+      code,
+      .mono {
+        font-family: var(--font-mono);
+      }
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+        border-radius: var(--r-xs);
+      }
+
+      img,
+      svg {
+        display: block;
+      }
+
+      /* ============================================================
+   LAYOUT
+   ============================================================ */
+      .layout {
+        display: grid;
+        grid-template-columns: 248px 1fr;
+        min-height: 100vh;
+      }
+      .sidenav {
+        position: sticky;
+        top: 0;
+        align-self: start;
+        height: 100vh;
+        overflow-y: auto;
+        background: var(--surface-0);
+        border-right: 1px solid var(--border-subtle);
+        padding: var(--sp-6) var(--sp-5) var(--sp-8);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: var(--sp-3);
+        margin-bottom: var(--sp-8);
+        padding-left: var(--sp-1);
+      }
+      .brand-text {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.25;
+      }
+      .brand-name {
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .brand-sub {
+        font-size: 10.5px;
+        color: var(--text-tertiary);
+        font-family: var(--font-mono);
+        letter-spacing: 0.04em;
+      }
+
+      .navgroup {
+        margin-bottom: var(--sp-2);
+      }
+      .navgroup-label {
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        color: var(--text-disabled);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: var(--sp-3) var(--sp-3) var(--sp-1);
+      }
+      .navlink {
+        display: flex;
+        align-items: baseline;
+        gap: var(--sp-2);
+        padding: 6px var(--sp-3);
+        border-radius: var(--r-sm);
+        color: var(--text-secondary);
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .navlink .idx {
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        color: var(--text-disabled);
+      }
+      .navlink:hover {
+        background: var(--surface-1);
+        color: var(--text-primary);
+        text-decoration: none;
+      }
+
+      .content {
+        padding: var(--sp-16) var(--sp-12) var(--sp-20);
+        max-width: 980px;
+      }
+      .section {
+        padding-top: var(--sp-20);
+        border-top: 1px solid var(--border-subtle);
+      }
+      .section:first-child {
+        border-top: none;
+        padding-top: 0;
+      }
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin-bottom: var(--sp-3);
+        display: flex;
+        align-items: center;
+        gap: var(--sp-2);
+      }
+      .eyebrow .dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--accent);
+        display: inline-block;
+      }
+      .section h2 {
+        font-size: 30px;
+        margin-bottom: var(--sp-3);
+      }
+      .section-lede {
+        font-size: 16px;
+        color: var(--text-secondary);
+        max-width: 640px;
+        margin-bottom: var(--sp-10);
+        line-height: 1.65;
+      }
+      .subhead {
+        font-size: 18px;
+        font-weight: 600;
+        margin: var(--sp-10) 0 var(--sp-2);
+      }
+      .sub-lede {
+        font-size: 14px;
+        color: var(--text-secondary);
+        max-width: 600px;
+        margin-bottom: var(--sp-5);
+      }
+      .note {
+        font-size: 13px;
+        color: var(--text-tertiary);
+        line-height: 1.6;
+      }
+
+      /* ============================================================
+   UTILITIES
+   ============================================================ */
+      .grid {
+        display: grid;
+        gap: var(--sp-4);
+      }
+      .grid-2 {
+        grid-template-columns: 1fr 1fr;
+      }
+      .grid-3 {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .grid-4 {
+        grid-template-columns: repeat(4, 1fr);
+      }
+      .grid-5 {
+        grid-template-columns: repeat(5, 1fr);
+      }
+      .flex {
+        display: flex;
+      }
+      .flex-col {
+        display: flex;
+        flex-direction: column;
+      }
+      .items-center {
+        align-items: center;
+      }
+      .gap-1 {
+        gap: var(--sp-1);
+      }
+      .gap-2 {
+        gap: var(--sp-2);
+      }
+      .gap-3 {
+        gap: var(--sp-3);
+      }
+      .gap-4 {
+        gap: var(--sp-4);
+      }
+      .muted {
+        color: var(--text-secondary);
+      }
+      .tertiary {
+        color: var(--text-tertiary);
+      }
+      .small {
+        font-size: 12.5px;
+      }
+      .card {
+        background: var(--surface-1);
+        border: 1px solid var(--border-default);
+        border-radius: var(--r-lg);
+        padding: var(--sp-5);
+      }
+      .divider {
+        height: 1px;
+        background: var(--border-subtle);
+        border: none;
+        margin: var(--sp-6) 0;
+      }
+
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 13px;
+      }
+      th {
+        text-align: left;
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-disabled);
+        font-weight: 500;
+        padding: var(--sp-2) var(--sp-3);
+        border-bottom: 1px solid var(--border-default);
+      }
+      td {
+        padding: 10px var(--sp-3);
+        border-bottom: 1px solid var(--border-subtle);
+        color: var(--text-secondary);
+        vertical-align: middle;
+      }
+      tr td:first-child {
+        color: var(--text-primary);
+        font-family: var(--font-mono);
+        font-size: 12.5px;
+      }
+
+      /* ============================================================
+   HERO
+   ============================================================ */
+      .hero {
+        padding-top: var(--sp-6);
+      }
+      .hero-grid {
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        gap: var(--sp-10);
+        align-items: start;
+      }
+      .hero h1 {
+        font-size: 46px;
+        line-height: 1.08;
+        letter-spacing: -0.02em;
+        margin-bottom: var(--sp-5);
+      }
+      .hero h1 em {
+        font-style: normal;
+        color: var(--accent);
+      }
+      .hero-desc {
+        font-size: 16px;
+        color: var(--text-secondary);
+        line-height: 1.7;
+        max-width: 480px;
+        margin-bottom: var(--sp-6);
+      }
+      .hero-meta {
+        display: flex;
+        gap: var(--sp-5);
+        margin-top: var(--sp-8);
+        flex-wrap: wrap;
+      }
+      .hero-meta-item {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .hero-meta-item .v {
+        font-family: var(--font-mono);
+        font-size: 13px;
+        color: var(--text-primary);
+      }
+      .hero-meta-item .l {
+        font-size: 11px;
+        color: var(--text-disabled);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+
+      /* ---- live agent demo frame ---- */
+      .demo-frame {
+        background: var(--surface-1);
+        border: 1px solid var(--border-default);
+        border-radius: var(--r-xl);
+        padding: var(--sp-5);
+        position: relative;
+        overflow: hidden;
+      }
+      .demo-frame::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        border-radius: inherit;
+        background: radial-gradient(
+          420px 180px at 85% -10%,
+          var(--accent-softer),
+          transparent 60%
+        );
+      }
+      .demo-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: var(--sp-4);
+        position: relative;
+      }
+      .demo-title {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--text-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .demo-status {
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+        color: var(--accent);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      /* Orb — signature element */
+      .orb-wrap {
+        position: relative;
+        width: var(--orb-size, 40px);
+        height: var(--orb-size, 40px);
+        flex: 0 0 auto;
+        display: grid;
+        place-items: center;
+        transition: filter var(--dur-slow) var(--ease-standard);
+      }
+      .orb {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: var(--surface-2);
+      }
+      .orb::before {
+        content: "";
+        position: absolute;
+        inset: -3px;
+        border-radius: 50%;
+        background: conic-gradient(
+          from 0deg,
+          var(--accent),
+          var(--mint),
+          var(--accent)
+        );
+        -webkit-mask: radial-gradient(
+          farthest-side,
+          transparent calc(100% - 3px),
+          #000 calc(100% - 3px)
+        );
+        mask: radial-gradient(
+          farthest-side,
+          transparent calc(100% - 3px),
+          #000 calc(100% - 3px)
+        );
+        animation: orb-spin 3.4s linear infinite;
+        opacity: 0.5;
+        transition:
+          opacity var(--dur-slow) var(--ease-standard),
+          background var(--dur-slow);
+      }
+      .orb::after {
+        content: "";
+        width: 58%;
+        height: 58%;
+        border-radius: 50%;
+        background: var(--surface-0);
+      }
+      @keyframes orb-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes orb-glow-pulse {
+        0%,
+        100% {
+          box-shadow: 0 0 0 0 var(--accent-soft);
+        }
+        50% {
+          box-shadow: 0 0 18px 4px var(--accent-soft);
+        }
+      }
+      @keyframes orb-alert {
+        0%,
+        100% {
+          box-shadow: 0 0 0 0 var(--red-soft);
+        }
+        50% {
+          box-shadow: 0 0 16px 5px var(--red-soft);
+        }
+      }
+      @keyframes orb-error-flash {
+        0%,
+        100% {
+          opacity: 0.5;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+
+      .orb-wrap.is-idle .orb::before {
+        opacity: 0.28;
+        animation-play-state: paused;
+      }
+      .orb-wrap.is-listening .orb::before {
+        opacity: 0.7;
+        animation-duration: 2.2s;
+      }
+      .orb-wrap.is-listening {
+        animation: orb-glow-pulse 1.6s var(--ease-breath) infinite;
+      }
+      .orb-wrap.is-thinking .orb::before {
+        opacity: 0.9;
+        animation-duration: 1s;
+      }
+      .orb-wrap.is-thinking {
+        animation: orb-glow-pulse 1.2s var(--ease-breath) infinite;
+      }
+      .orb-wrap.is-acting .orb::before {
+        opacity: 1;
+        animation-duration: 0.55s;
+      }
+      .orb-wrap.is-acting {
+        animation: orb-glow-pulse 0.8s var(--ease-breath) infinite;
+      }
+      .orb-wrap.is-permission .orb::before {
+        opacity: 1;
+        animation-play-state: paused;
+        background: conic-gradient(
+          from 0deg,
+          var(--accent),
+          var(--red),
+          var(--accent)
+        );
+      }
+      .orb-wrap.is-permission {
+        animation: orb-alert 0.9s ease-in-out infinite;
+      }
+      .orb-wrap.is-streaming .orb::before {
+        opacity: 0.85;
+        animation-duration: 1.6s;
+        background: conic-gradient(
+          from 0deg,
+          var(--mint),
+          var(--accent),
+          var(--mint)
+        );
+      }
+      .orb-wrap.is-streaming {
+        animation: orb-glow-pulse 1.4s var(--ease-breath) infinite;
+      }
+      .orb-wrap.is-done .orb::before {
+        opacity: 1;
+        animation: none;
+        background: var(--mint);
+      }
+      .orb-wrap.is-error .orb::before {
+        opacity: 1;
+        animation: orb-error-flash 0.35s ease-in-out 3;
+        background: var(--red);
+      }
+
+      /* Plan checklist */
+      .plan {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        margin: var(--sp-3) 0;
+      }
+      .plan-step {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--sp-3);
+        padding: var(--sp-3);
+        border-radius: var(--r-md);
+        transition: background var(--dur-base) var(--ease-standard);
+      }
+      .plan-step.is-current {
+        background: var(--surface-2);
+      }
+      .status-icon {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        flex: 0 0 auto;
+        display: grid;
+        place-items: center;
+        margin-top: 2px;
+        transition: all var(--dur-base) var(--ease-standard);
+      }
+      .status-icon.pending {
+        border: 2px solid var(--border-strong);
+        background: transparent;
+      }
+      .status-icon.active {
+        border: 2px solid var(--accent-soft);
+        border-top-color: var(--accent);
+        animation: spin 0.8s linear infinite;
+      }
+      .status-icon.done {
+        background: var(--mint);
+      }
+      .status-icon.failed {
+        background: var(--red);
+      }
+      .status-icon svg {
+        width: 9px;
+        height: 9px;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .plan-text {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .plan-label {
+        font-size: 13.5px;
+        color: var(--text-primary);
+        font-weight: 500;
+      }
+      .plan-step.is-pending .plan-label {
+        color: var(--text-tertiary);
+        font-weight: 400;
+      }
+      .plan-tool {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--text-tertiary);
+      }
+      .trust-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 5px;
+      }
+      .trust-dot.read {
+        background: var(--mint);
+      }
+      .trust-dot.write {
+        background: var(--accent);
+      }
+      .trust-dot.danger {
+        background: var(--red);
+      }
+
+      /* Permission inline card */
+      .permission-card {
+        margin-top: var(--sp-3);
+        padding: var(--sp-4);
+        border-radius: var(--r-md);
+        background: var(--accent-softer);
+        border: 1px solid var(--accent-soft);
+        display: none;
+        flex-direction: column;
+        gap: var(--sp-3);
+      }
+      .permission-card.show {
+        display: flex;
+      }
+      .permission-card .pc-row {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--sp-2);
+        font-size: 13px;
+      }
+      .permission-card .pc-actions {
+        display: flex;
+        gap: var(--sp-2);
+      }
+
+      /* Streaming bubble */
+      .stream-text {
+        font-size: 14px;
+        line-height: 1.7;
+        color: var(--text-primary);
+        min-height: 1.6em;
+      }
+      .stream-text .cursor {
+        display: inline-block;
+        width: 7px;
+        height: 1em;
+        background: var(--mint);
+        margin-left: 2px;
+        vertical-align: -2px;
+        animation: blink 1s step-end infinite;
+      }
+      @keyframes blink {
+        50% {
+          opacity: 0;
+        }
+      }
+      .citerow {
+        display: flex;
+        gap: var(--sp-2);
+        margin-top: var(--sp-3);
+        flex-wrap: wrap;
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px 4px 6px;
+        background: var(--surface-2);
+        border: 1px solid var(--border-default);
+        border-radius: var(--r-full);
+        font-size: 11.5px;
+        color: var(--text-secondary);
+      }
+      .chip .favicon {
+        width: 14px;
+        height: 14px;
+        border-radius: 3px;
+        background: var(--accent-soft);
+        display: grid;
+        place-items: center;
+        font-size: 8px;
+        color: var(--accent);
+        font-family: var(--font-mono);
+      }
+
+      /* ============================================================
+   BUTTONS
+   ============================================================ */
+      .btn {
+        appearance: none;
+        border: 1px solid transparent;
+        font-family: var(--font-sans);
+        font-weight: 500;
+        font-size: 13px;
+        padding: 8px 14px;
+        border-radius: var(--r-sm);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        transition:
+          background var(--dur-fast) var(--ease-standard),
+          border-color var(--dur-fast),
+          transform var(--dur-fast),
+          opacity var(--dur-fast);
+        line-height: 1.2;
+      }
+      .btn:active {
+        transform: scale(0.97);
+      }
+      .btn-primary {
+        background: var(--accent);
+        color: var(--text-on-accent);
+      }
+      .btn-primary:hover {
+        background: var(--accent-hover);
+      }
+      .btn-secondary {
+        background: var(--surface-2);
+        color: var(--text-primary);
+        border-color: var(--border-default);
+      }
+      .btn-secondary:hover {
+        background: var(--surface-hover);
+        border-color: var(--border-strong);
+      }
+      .btn-ghost {
+        background: transparent;
+        color: var(--text-secondary);
+      }
+      .btn-ghost:hover {
+        background: var(--surface-1);
+        color: var(--text-primary);
+      }
+      .btn-danger {
+        background: transparent;
+        color: var(--red);
+        border-color: var(--red-soft);
+      }
+      .btn-danger:hover {
+        background: var(--red-softer);
+      }
+      .btn-sm {
+        padding: 5px 10px;
+        font-size: 12px;
+        border-radius: var(--r-xs);
+      }
+      .btn-icon {
+        padding: 8px;
+        border-radius: var(--r-sm);
+      }
+      .btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        transform: none;
+      }
+      .btn-stop {
+        background: var(--surface-2);
+        color: var(--text-primary);
+        border: 1px solid var(--border-strong);
+        border-radius: var(--r-full);
+        padding: 7px 14px 7px 10px;
+        font-size: 12.5px;
+        font-weight: 500;
+      }
+      .btn-stop:hover {
+        border-color: var(--red);
+        color: var(--red);
+      }
+      .btn-stop .sq {
+        width: 9px;
+        height: 9px;
+        background: currentColor;
+        border-radius: 2px;
+      }
+
+      /* ============================================================
+   FORM ELEMENTS
+   ============================================================ */
+      .field {
+        width: 100%;
+        background: var(--surface-2);
+        border: 1px solid var(--border-default);
+        color: var(--text-primary);
+        border-radius: var(--r-sm);
+        padding: 9px 12px;
+        font-family: var(--font-sans);
+        font-size: 13.5px;
+      }
+      .field::placeholder {
+        color: var(--text-tertiary);
+      }
+      .field:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-softer);
+      }
+      textarea.field {
+        resize: vertical;
+        min-height: 80px;
+      }
+
+      .toggle {
+        position: relative;
+        width: 36px;
+        height: 20px;
+        flex: 0 0 auto;
+      }
+      .toggle input {
+        position: absolute;
+        opacity: 0;
+        inset: 0;
+        margin: 0;
+        cursor: pointer;
+      }
+      .toggle .track {
+        position: absolute;
+        inset: 0;
+        background: var(--surface-2);
+        border: 1px solid var(--border-strong);
+        border-radius: var(--r-full);
+        transition: background var(--dur-base);
+      }
+      .toggle .thumb {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--text-secondary);
+        transition:
+          transform var(--dur-base) var(--ease-standard),
+          background var(--dur-base);
+      }
+      .toggle input:checked ~ .track {
+        background: var(--accent-soft);
+        border-color: var(--accent);
+      }
+      .toggle input:checked ~ .track .thumb {
+        transform: none;
+      }
+      .toggle input:checked ~ .thumb {
+        transform: translateX(16px);
+        background: var(--accent);
+      }
+
+      /* ============================================================
+   BADGES / PILLS / TOOLTIPS / TOASTS
+   ============================================================ */
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 9px;
+        border-radius: var(--r-full);
+        font-size: 11px;
+        font-weight: 500;
+        font-family: var(--font-mono);
+      }
+      .badge-mint {
+        background: var(--mint-softer);
+        color: var(--mint);
+      }
+      .badge-accent {
+        background: var(--accent-softer);
+        color: var(--accent);
+      }
+      .badge-red {
+        background: var(--red-softer);
+        color: var(--red);
+      }
+      .badge-neutral {
+        background: var(--surface-2);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-default);
+      }
+
+      .pillrow {
+        display: inline-flex;
+        background: var(--surface-2);
+        border: 1px solid var(--border-default);
+        border-radius: var(--r-full);
+        padding: 3px;
+      }
+      .pill {
+        padding: 5px 12px;
+        border-radius: var(--r-full);
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--text-tertiary);
+        cursor: pointer;
+        border: none;
+        background: transparent;
+        font-family: var(--font-sans);
+      }
+      .pill.active {
+        background: var(--accent);
+        color: var(--text-on-accent);
+      }
+
+      [data-tooltip] {
+        position: relative;
+      }
+      [data-tooltip]::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: calc(100% + 8px);
+        left: 50%;
+        transform: translateX(-50%) translateY(4px);
+        background: var(--surface-3);
+        color: var(--text-primary);
+        border: 1px solid var(--border-default);
+        padding: 5px 9px;
+        border-radius: var(--r-sm);
+        font-size: 11.5px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition:
+          opacity var(--dur-fast),
+          transform var(--dur-fast);
+      }
+      [data-tooltip]:hover::after {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      .toast-region {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 999;
+      }
+      .toast {
+        background: var(--surface-2);
+        border: 1px solid var(--border-default);
+        border-radius: var(--r-md);
+        padding: 10px 14px;
+        font-size: 12.5px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        animation: toast-in 0.25s var(--ease-out);
+      }
+      @keyframes toast-in {
+        from {
+          opacity: 0;
+          transform: translateY(6px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+
+      /* ============================================================
+   SWATCHES / SPECIMENS
+   ============================================================ */
+      .swatch {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .swatch-fill {
+        height: 64px;
+        border-radius: var(--r-md);
+        border: 1px solid var(--border-default);
+      }
+      .swatch-name {
+        font-size: 12.5px;
+        font-weight: 500;
+      }
+      .swatch-hex {
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+        color: var(--text-tertiary);
+      }
+      .swatch-use {
+        font-size: 11px;
+        color: var(--text-disabled);
+        line-height: 1.4;
+      }
+
+      .type-row {
+        display: flex;
+        align-items: baseline;
+        gap: var(--sp-5);
+        padding: var(--sp-4) 0;
+        border-bottom: 1px solid var(--border-subtle);
+      }
+      .type-row:last-child {
+        border-bottom: none;
+      }
+      .type-meta {
+        width: 170px;
+        flex: 0 0 auto;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--text-tertiary);
+        line-height: 1.6;
+      }
+      .type-meta b {
+        display: block;
+        color: var(--text-secondary);
+        font-size: 11.5px;
+        margin-bottom: 2px;
+      }
+
+      .space-row {
+        display: flex;
+        align-items: center;
+        gap: var(--sp-4);
+        padding: 7px 0;
+      }
+      .space-bar {
+        height: 8px;
+        background: var(--accent);
+        border-radius: 2px;
+      }
+      .space-label {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--text-secondary);
+        width: 90px;
+      }
+      .space-px {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--text-tertiary);
+        width: 50px;
+      }
+
+      /* ============================================================
+   TABS / DETAILS (tool-call card, thinking trace)
+   ============================================================ */
+      details {
+        border: 1px solid var(--border-default);
+        border-radius: var(--r-md);
+        background: var(--surface-1);
+        overflow: hidden;
+      }
+      details + details {
+        margin-top: var(--sp-3);
+      }
+      summary {
+        list-style: none;
+        cursor: pointer;
+        padding: var(--sp-4);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--sp-3);
+      }
+      summary::-webkit-details-marker {
+        display: none;
+      }
+      summary .chev {
+        width: 14px;
+        height: 14px;
+        color: var(--text-tertiary);
+        transition: transform var(--dur-base) var(--ease-standard);
+        flex: 0 0 auto;
+      }
+      details[open] summary .chev {
+        transform: rotate(180deg);
+      }
+      .details-body {
+        padding: 0 var(--sp-4) var(--sp-4);
+        border-top: 1px solid var(--border-subtle);
+      }
+
+      .tool-card {
+        border-left: 3px solid var(--mint);
+      }
+      .tool-card.write {
+        border-left-color: var(--accent);
+      }
+      .tool-card.danger {
+        border-left-color: var(--red);
+      }
+      .tool-head {
+        display: flex;
+        align-items: center;
+        gap: var(--sp-3);
+        flex: 1;
+      }
+      .tool-name {
+        font-family: var(--font-mono);
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .tool-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: var(--r-sm);
+        background: var(--surface-2);
+        display: grid;
+        place-items: center;
+        flex: 0 0 auto;
+        color: var(--text-secondary);
+      }
+      .codeblock {
+        background: var(--surface-0);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--r-sm);
+        padding: var(--sp-3);
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--text-secondary);
+        line-height: 1.7;
+        overflow-x: auto;
+        margin-top: var(--sp-3);
+      }
+      .codeblock .k {
+        color: var(--accent);
+      }
+      .codeblock .s {
+        color: var(--mint);
+      }
+      .codeblock .c {
+        color: var(--text-disabled);
+      }
+      .codeblock-label {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-disabled);
+        margin-top: var(--sp-3);
+        margin-bottom: -2px;
+      }
+
+      /* Diff view */
+      .diffline {
+        font-family: var(--font-mono);
+        font-size: 12.5px;
+        padding: 3px var(--sp-3);
+        border-radius: var(--r-xs);
+        white-space: pre;
+      }
+      .diffline.add {
+        background: var(--mint-softer);
+        color: var(--mint);
+      }
+      .diffline.rem {
+        background: var(--red-softer);
+        color: var(--red);
+      }
+      .diffline.ctx {
+        color: var(--text-tertiary);
+      }
+
+      /* Timeline */
+      .timeline {
+        position: relative;
+        padding-left: 22px;
+      }
+      .timeline::before {
+        content: "";
+        position: absolute;
+        left: 5px;
+        top: 4px;
+        bottom: 4px;
+        width: 1px;
+        background: var(--border-default);
+      }
+      .tl-item {
+        position: relative;
+        padding-bottom: var(--sp-5);
+      }
+      .tl-item:last-child {
+        padding-bottom: 0;
+      }
+      .tl-dot {
+        position: absolute;
+        left: -22px;
+        top: 3px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--surface-0);
+        border: 2px solid var(--mint);
+      }
+      .tl-dot.write {
+        border-color: var(--accent);
+      }
+      .tl-time {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--text-disabled);
+      }
+      .tl-text {
+        font-size: 13px;
+        margin-top: 2px;
+      }
+
+      /* ============================================================
+   BROWSER HOMEPAGE MOCK
+   ============================================================ */
+      .browser-frame {
+        border: 1px solid var(--border-default);
+        border-radius: var(--r-xl);
+        overflow: hidden;
+        background: var(--surface-0);
+      }
+      .chrome-bar {
+        display: flex;
+        align-items: center;
+        gap: var(--sp-3);
+        padding: 10px var(--sp-4);
+        background: var(--surface-1);
+        border-bottom: 1px solid var(--border-default);
+      }
+      .chrome-dots {
+        display: flex;
+        gap: 6px;
+      }
+      .chrome-dots span {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--border-strong);
+      }
+      .chrome-url {
+        flex: 1;
+        background: var(--surface-2);
+        border-radius: var(--r-full);
+        padding: 5px 14px;
+        font-size: 11px;
+        color: var(--text-tertiary);
+        font-family: var(--font-mono);
+      }
+
+      .mockpage {
+        padding: var(--sp-8) var(--sp-8) var(--sp-10);
+        background:
+          radial-gradient(900px 420px at 15% -10%, #1a1610 0%, transparent 60%),
+          radial-gradient(700px 380px at 100% 0%, #0f1614 0%, transparent 55%),
+          var(--surface-0);
+      }
+      .mock-topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--sp-10);
+      }
+      .mock-clock {
+        font-size: 30px;
+        font-weight: 300;
+        letter-spacing: -0.01em;
+      }
+      .mock-date {
+        font-size: 12px;
+        color: var(--text-tertiary);
+        font-family: var(--font-mono);
+      }
+      .mock-icons {
+        display: flex;
+        gap: var(--sp-3);
+        color: var(--text-tertiary);
+      }
+
+      .omnibox {
+        max-width: 620px;
+        margin: 0 auto var(--sp-10);
+        background: var(--surface-1);
+        border: 1px solid var(--border-default);
+        border-radius: var(--r-xl);
+        padding: var(--sp-2);
+        display: flex;
+        flex-direction: column;
+        gap: var(--sp-2);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      }
+      .omnibox-row {
+        display: flex;
+        align-items: center;
+        gap: var(--sp-3);
+        padding: var(--sp-2) var(--sp-3);
+      }
+      .omnibox-input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: var(--text-primary);
+        font-size: 14px;
+        font-family: var(--font-sans);
+      }
+      .omnibox-input::placeholder {
+        color: var(--text-tertiary);
+      }
+      .omnibox-foot {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 var(--sp-2) var(--sp-1);
+      }
+
+      .shortcut-grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: var(--sp-3);
+        max-width: 620px;
+        margin: 0 auto var(--sp-10);
+      }
+      .shortcut-tile {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        padding: var(--sp-3) 0;
+      }
+      .tile-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: var(--r-md);
+        background: var(--surface-1);
+        border: 1px solid var(--border-default);
+        display: grid;
+        place-items: center;
+        font-family: var(--font-mono);
+        font-size: 13px;
+        color: var(--accent);
+      }
+      .tile-label {
+        font-size: 10.5px;
+        color: var(--text-tertiary);
+      }
+
+      .widget-row {
+        display: grid;
+        grid-template-columns: 1.3fr 1fr 1fr;
+        gap: var(--sp-4);
+        max-width: 620px;
+        margin: 0 auto;
+      }
+      .widget {
+        background: var(--surface-1);
+        border: 1px solid var(--border-default);
+        border-radius: var(--r-lg);
+        padding: var(--sp-4);
+      }
+      .widget-title {
+        font-size: 10.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: var(--text-disabled);
+        font-family: var(--font-mono);
+        margin-bottom: var(--sp-3);
+      }
+
+      /* agent drawer */
+      .agent-drawer {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 300px;
+        background: var(--surface-1);
+        border-left: 1px solid var(--border-default);
+        padding: var(--sp-5);
+        display: flex;
+        flex-direction: column;
+        gap: var(--sp-4);
+      }
+      .drawer-head {
+        display: flex;
+        align-items: center;
+        gap: var(--sp-3);
+      }
+      .mockpage-wrap {
+        position: relative;
+      }
+
+      /* ============================================================
+   CALLOUT LEGEND
+   ============================================================ */
+      .legend {
+        display: flex;
+        gap: var(--sp-5);
+        flex-wrap: wrap;
+        margin-top: var(--sp-3);
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 12.5px;
+        color: var(--text-secondary);
+      }
+      .legend-item .sw {
+        width: 10px;
+        height: 10px;
+        border-radius: 3px;
+      }
+
+      /* responsive */
+      @media (max-width: 980px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+        .sidenav {
+          position: relative;
+          height: auto;
+          border-right: none;
+          border-bottom: 1px solid var(--border-subtle);
+          display: flex;
+          align-items: center;
+          overflow-x: auto;
+        }
+        .content {
+          padding: var(--sp-8) var(--sp-5) var(--sp-16);
+        }
+        .hero-grid,
+        .grid-2,
+        .grid-3,
+        .grid-4,
+        .grid-5 {
+          grid-template-columns: 1fr;
+        }
+        .shortcut-grid {
+          grid-template-columns: repeat(3, 1fr);
+        }
+        .widget-row {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.001ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.001ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <!-- ============== SIDE NAV ============== -->
+      <nav class="sidenav" aria-label="Design system sections">
+        <div class="brand">
+          <div class="orb-wrap is-thinking" style="--orb-size: 28px">
+            <div class="orb"></div>
+          </div>
+          <div class="brand-text">
+            <span class="brand-name">Vesper Agentic</span>
+            <span class="brand-sub">UI KIT · V1.0</span>
+          </div>
+        </div>
+
+        <div class="navgroup">
+          <div class="navgroup-label">Start</div>
+          <a class="navlink" href="#overview"
+            ><span class="idx">00</span> Overview</a
+          >
+        </div>
+        <div class="navgroup">
+          <div class="navgroup-label">Foundations</div>
+          <a class="navlink" href="#color"><span class="idx">01</span> Color</a>
+          <a class="navlink" href="#type"
+            ><span class="idx">02</span> Typography</a
+          >
+          <a class="navlink" href="#space"
+            ><span class="idx">03</span> Space &amp; elevation</a
+          >
+          <a class="navlink" href="#motion"
+            ><span class="idx">04</span> Motion</a
+          >
+        </div>
+        <div class="navgroup">
+          <div class="navgroup-label">System</div>
+          <a class="navlink" href="#agent-model"
+            ><span class="idx">05</span> Agent state model</a
+          >
+          <a class="navlink" href="#core"
+            ><span class="idx">06</span> Core components</a
+          >
+          <a class="navlink" href="#homepage"
+            ><span class="idx">07</span> Homepage surface</a
+          >
+          <a class="navlink" href="#agentic"
+            ><span class="idx">08</span> Agentic components</a
+          >
+          <a class="navlink" href="#architecture"
+            ><span class="idx">09</span> Page architecture</a
+          >
+        </div>
+        <div class="navgroup">
+          <div class="navgroup-label">Reference</div>
+          <a class="navlink" href="#a11y"
+            ><span class="idx">10</span> Accessibility</a
+          >
+          <a class="navlink" href="#tokens"
+            ><span class="idx">11</span> Tokens</a
+          >
+        </div>
+      </nav>
+
+      <!-- ============== MAIN CONTENT ============== -->
+      <main class="content">
+        <!-- ===================== 00 OVERVIEW / HERO ===================== -->
+        <header id="overview" class="section hero">
+          <div class="eyebrow">
+            <span class="dot"></span> DESIGN SYSTEM FOR AGENT-NATIVE BROWSER
+            HOMEPAGES
+          </div>
+          <div class="hero-grid">
+            <div>
+              <h1>A homepage<br />that thinks <em>out loud.</em></h1>
+              <p class="hero-desc">
+                Tokens and components for a browser new-tab extension where an
+                AI agent is a first-class citizen, not a chat box bolted onto a
+                search bar. Built on the Vesper palette — peppermint mint and
+                orange on near‑black — chosen because its small, disciplined hue
+                set maps cleanly onto what an agent needs to communicate:
+                <em>safe</em>, <em>active</em>, <em>stop</em>.
+              </p>
+              <div class="flex gap-3">
+                <button
+                  class="btn btn-primary"
+                  onclick="
+                    document
+                      .getElementById('agentic')
+                      .scrollIntoView({ behavior: 'smooth' })
+                  "
+                >
+                  Browse agentic components
+                </button>
+                <button
+                  class="btn btn-secondary"
+                  onclick="
+                    document
+                      .getElementById('tokens')
+                      .scrollIntoView({ behavior: 'smooth' })
+                  "
+                >
+                  Jump to tokens
+                </button>
+              </div>
+              <div class="hero-meta">
+                <div class="hero-meta-item">
+                  <span class="v">#101010 → #FFC799 → #99FFE4</span
+                  ><span class="l">Core palette</span>
+                </div>
+                <div class="hero-meta-item">
+                  <span class="v">Geist / Geist Mono</span
+                  ><span class="l">Typefaces</span>
+                </div>
+                <div class="hero-meta-item">
+                  <span class="v">12</span><span class="l">Sections</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- LIVE end-to-end agent demo -->
+            <div class="demo-frame" id="heroDemo">
+              <div class="demo-top">
+                <span class="demo-title">Live demo — agent lifecycle</span>
+                <span class="demo-status"
+                  ><span
+                    class="orb-wrap is-idle"
+                    id="heroOrb"
+                    style="--orb-size: 14px"
+                    ><div class="orb"></div
+                  ></span>
+                  <span id="heroStatusText">Idle</span></span
+                >
+              </div>
+
+              <div class="flex items-center gap-3" style="margin-bottom: 14px">
+                <div
+                  class="orb-wrap is-idle"
+                  id="heroOrbBig"
+                  style="--orb-size: 40px"
+                >
+                  <div class="orb"></div>
+                </div>
+                <div
+                  class="field"
+                  style="flex: 1; color: var(--text-tertiary); font-size: 13px"
+                  id="heroPrompt"
+                >
+                  Find flights to Cairo next weekend and add the cheapest one to
+                  my calendar
+                </div>
+              </div>
+
+              <div class="plan" id="heroPlan">
+                <div class="plan-step is-pending" data-step="1">
+                  <span class="status-icon pending"></span>
+                  <div class="plan-text">
+                    <span class="plan-label"
+                      ><span class="trust-dot read"></span>Search flights to
+                      Cairo</span
+                    >
+                    <span class="plan-tool"
+                      >search_flights({ to: "CAI", dates: "next_weekend"
+                      })</span
+                    >
+                  </div>
+                </div>
+                <div class="plan-step is-pending" data-step="2">
+                  <span class="status-icon pending"></span>
+                  <div class="plan-text">
+                    <span class="plan-label"
+                      ><span class="trust-dot read"></span>Check your calendar
+                      availability</span
+                    >
+                    <span class="plan-tool"
+                      >get_calendar_availability({ range: "sat–sun" })</span
+                    >
+                  </div>
+                </div>
+                <div class="plan-step is-pending" data-step="3">
+                  <span class="status-icon pending"></span>
+                  <div class="plan-text">
+                    <span class="plan-label"
+                      ><span class="trust-dot write"></span>Add cheapest flight
+                      to calendar</span
+                    >
+                    <span class="plan-tool"
+                      >create_calendar_event({ ... })</span
+                    >
+                  </div>
+                </div>
+              </div>
+
+              <div class="permission-card" id="heroPermission">
+                <div class="pc-row">
+                  <span class="badge badge-accent">Needs approval</span>
+                </div>
+                <div
+                  class="pc-row"
+                  style="font-size: 13px; color: var(--text-primary)"
+                >
+                  Add <strong>"Flight to Cairo — EGY 412"</strong> ($214) to
+                  your calendar for Saturday, 7:40 AM?
+                </div>
+                <div class="pc-actions">
+                  <button
+                    class="btn btn-primary btn-sm"
+                    onclick="heroResolvePermission(true, this)"
+                  >
+                    Allow once
+                  </button>
+                  <button
+                    class="btn btn-secondary btn-sm"
+                    onclick="heroResolvePermission(false, this)"
+                  >
+                    Deny
+                  </button>
+                </div>
+              </div>
+
+              <div id="heroStreamWrap" style="display: none; margin-top: 14px">
+                <div class="stream-text" id="heroStreamText"></div>
+              </div>
+
+              <div
+                class="flex"
+                style="margin-top: 16px; justify-content: flex-end"
+              >
+                <button
+                  class="btn btn-primary btn-sm"
+                  id="heroRunBtn"
+                  onclick="runHeroDemo()"
+                >
+                  ▶ Run agent
+                </button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <!-- ===================== 01 COLOR ===================== -->
+        <section id="color" class="section">
+          <div class="eyebrow"><span class="dot"></span> 01 · Foundations</div>
+          <h2>Color</h2>
+          <p class="section-lede">
+            Sourced from Rauno Freiberg's <strong>Vesper</strong> VS&nbsp;Code
+            theme — a tight, two-accent system (peppermint mint + orange) on
+            near-black surfaces. The restraint is the point: an agent interface
+            that talks to you constantly needs very few colors so each one stays
+            meaningful.
+          </p>
+
+          <div class="subhead">Surfaces</div>
+          <div class="grid grid-5">
+            <div class="swatch">
+              <div
+                class="swatch-fill"
+                style="
+                  background: var(--surface-0);
+                  border: 1px solid var(--border-default);
+                "
+              ></div>
+              <span class="swatch-name">surface-0</span
+              ><span class="swatch-hex">#101010</span
+              ><span class="swatch-use">Page background, base canvas</span>
+            </div>
+            <div class="swatch">
+              <div
+                class="swatch-fill"
+                style="background: var(--surface-1)"
+              ></div>
+              <span class="swatch-name">surface-1</span
+              ><span class="swatch-hex">#161616</span
+              ><span class="swatch-use">Cards, raised panels, active tabs</span>
+            </div>
+            <div class="swatch">
+              <div
+                class="swatch-fill"
+                style="background: var(--surface-2)"
+              ></div>
+              <span class="swatch-name">surface-2</span
+              ><span class="swatch-hex">#1C1C1C</span
+              ><span class="swatch-use"
+                >Inputs, recessed wells, tool icons</span
+              >
+            </div>
+            <div class="swatch">
+              <div
+                class="swatch-fill"
+                style="background: var(--surface-selected)"
+              ></div>
+              <span class="swatch-name">surface-selected</span
+              ><span class="swatch-hex">#232323</span
+              ><span class="swatch-use">Active list / menu selection</span>
+            </div>
+            <div class="swatch">
+              <div
+                class="swatch-fill"
+                style="background: var(--surface-hover)"
+              ></div>
+              <span class="swatch-name">surface-hover</span
+              ><span class="swatch-hex">#282828</span
+              ><span class="swatch-use">Hover state, default border</span>
+            </div>
+          </div>
+
+          <div class="subhead">Text</div>
+          <div class="grid grid-4">
+            <div class="swatch">
+              <div
+                class="swatch-fill"
+                style="background: var(--text-primary)"
+              ></div>
+              <span class="swatch-name">text-primary</span
+              ><span class="swatch-hex">#FFFFFF</span
+              ><span class="swatch-use">Headlines, primary copy</span>
+            </div>
+            <div class="swatch">
+              <div
+                class="swatch-fill"
+                style="background: var(--text-secondary)"
+              ></div>
+              <span class="swatch-name">text-secondary</span
+              ><span class="swatch-hex">#A0A0A0</span
+              ><span class="swatch-use">Body copy, icons, labels</span>
+            </div>
+            <div class="swatch">
+              <div
+                class="swatch-fill"
+                style="background: var(--text-tertiary)"
+              ></div>
+              <span class="swatch-name">text-tertiary</span
+              ><span class="swatch-hex">#7E7E7E</span
+              ><span class="swatch-use"
+                >Captions, placeholders, timestamps</span
+              >
+            </div>
+            <div class="swatch">
+              <div
+                class="swatch-fill"
+                style="background: var(--text-disabled)"
+              ></div>
+              <span class="swatch-name">text-disabled</span
+              ><span class="swatch-hex">#505050</span
+              ><span class="swatch-use"
+                >Disabled, line numbers, dividers text</span
+              >
+            </div>
+          </div>
+
+          <div class="subhead">Accent — agent / amber</div>
+          <p class="sub-lede">
+            The orange is the agent's "hand" — anything it is actively doing, or
+            any control that lets you act, uses this. It is also the only color
+            used for mutating / write-tier actions.
+          </p>
+          <div class="grid grid-3">
+            <div class="swatch">
+              <div class="swatch-fill" style="background: var(--accent)"></div>
+              <span class="swatch-name">accent</span
+              ><span class="swatch-hex">#FFC799</span
+              ><span class="swatch-use"
+                >Primary buttons, active states, write-tier</span
+              >
+            </div>
+            <div class="swatch">
+              <div
+                class="swatch-fill"
+                style="background: var(--accent-hover)"
+              ></div>
+              <span class="swatch-name">accent-hover</span
+              ><span class="swatch-hex">#FFCFA8</span
+              ><span class="swatch-use">Hover/active of accent surfaces</span>
+            </div>
+            <div class="swatch">
+              <div
+                class="swatch-fill"
+                style="
+                  background: var(--accent-softer);
+                  border: 1px solid var(--border-default);
+                "
+              ></div>
+              <span class="swatch-name">accent-soft / softer</span
+              ><span class="swatch-hex">#FFC79926 / 14</span
+              ><span class="swatch-use"
+                >Tinted backgrounds, badges, focus ring glow</span
+              >
+            </div>
+          </div>
+
+          <div class="subhead">Positive — mint (read-only, safe, success)</div>
+          <p class="sub-lede">
+            Peppermint mint marks anything the agent does that
+            <em>cannot</em> change your data: reads, searches, citations,
+            completed/safe states.
+          </p>
+          <div class="grid grid-3">
+            <div class="swatch">
+              <div class="swatch-fill" style="background: var(--mint)"></div>
+              <span class="swatch-name">mint</span
+              ><span class="swatch-hex">#99FFE4</span
+              ><span class="swatch-use"
+                >Read-tier actions, success, additions</span
+              >
+            </div>
+            <div class="swatch">
+              <div
+                class="swatch-fill"
+                style="
+                  background: var(--mint-soft);
+                  border: 1px solid var(--border-default);
+                "
+              ></div>
+              <span class="swatch-name">mint-soft</span
+              ><span class="swatch-hex">#99FFE426</span
+              ><span class="swatch-use"
+                >Diff insert background, success tint</span
+              >
+            </div>
+            <div class="swatch">
+              <div
+                class="swatch-fill"
+                style="
+                  background: var(--mint-softer);
+                  border: 1px solid var(--border-default);
+                "
+              ></div>
+              <span class="swatch-name">mint-softer</span
+              ><span class="swatch-hex">#99FFE415</span
+              ><span class="swatch-use">Badge fill</span>
+            </div>
+          </div>
+
+          <div class="subhead">Negative — red (destructive, error, stop)</div>
+          <div class="grid grid-3">
+            <div class="swatch">
+              <div class="swatch-fill" style="background: var(--red)"></div>
+              <span class="swatch-name">red</span
+              ><span class="swatch-hex">#FF8080</span
+              ><span class="swatch-use"
+                >Errors, destructive actions, deletions</span
+              >
+            </div>
+            <div class="swatch">
+              <div
+                class="swatch-fill"
+                style="
+                  background: var(--red-soft);
+                  border: 1px solid var(--border-default);
+                "
+              ></div>
+              <span class="swatch-name">red-soft</span
+              ><span class="swatch-hex">#FF808026</span
+              ><span class="swatch-use">Diff remove background</span>
+            </div>
+            <div class="swatch">
+              <div
+                class="swatch-fill"
+                style="
+                  background: var(--red-softer);
+                  border: 1px solid var(--border-default);
+                "
+              ></div>
+              <span class="swatch-name">red-softer</span
+              ><span class="swatch-hex">#FF808015</span
+              ><span class="swatch-use">Error badge fill</span>
+            </div>
+          </div>
+
+          <div class="subhead">Trust-tier legend</div>
+          <p class="sub-lede">
+            Every component that represents an agent action carries one of three
+            colors. This is the only semantic color system in the kit — learn it
+            once, read it everywhere.
+          </p>
+          <div class="legend">
+            <div class="legend-item">
+              <span class="sw" style="background: var(--mint)"></span> Mint —
+              read-only, reversible by definition, never prompts
+            </div>
+            <div class="legend-item">
+              <span class="sw" style="background: var(--accent)"></span> Amber —
+              mutates state, always confirmable
+            </div>
+            <div class="legend-item">
+              <span class="sw" style="background: var(--red)"></span> Red —
+              destructive / irreversible, always confirmed
+            </div>
+          </div>
+        </section>
+
+        <!-- ===================== 02 TYPE ===================== -->
+        <section id="type" class="section">
+          <div class="eyebrow"><span class="dot"></span> 01 · Foundations</div>
+          <h2>Typography</h2>
+          <p class="section-lede">
+            <strong>Geist</strong> for interface text,
+            <strong>Geist Mono</strong> for anything literal: tool names,
+            parameters, hex codes, timestamps, code. The split matters for agent
+            UI specifically — it lets a person tell at a glance whether they're
+            reading the agent's prose or its raw machinery.
+          </p>
+
+          <div class="type-row">
+            <div class="type-meta"><b>Display</b>56 / 1.08 · 600 · Geist</div>
+            <div
+              style="
+                font-size: 56px;
+                font-weight: 600;
+                line-height: 1.08;
+                letter-spacing: -0.02em;
+              "
+            >
+              Agent says
+            </div>
+          </div>
+          <div class="type-row">
+            <div class="type-meta"><b>H1</b>36 / 1.15 · 600 · Geist</div>
+            <div style="font-size: 36px; font-weight: 600">
+              Add to calendar?
+            </div>
+          </div>
+          <div class="type-row">
+            <div class="type-meta"><b>H2</b>26 / 1.25 · 600 · Geist</div>
+            <div style="font-size: 26px; font-weight: 600">Tool-call card</div>
+          </div>
+          <div class="type-row">
+            <div class="type-meta"><b>H3</b>19 / 1.3 · 600 · Geist</div>
+            <div style="font-size: 19px; font-weight: 600">search_flights</div>
+          </div>
+          <div class="type-row">
+            <div class="type-meta"><b>Body large</b>17 / 1.6 · 400 · Geist</div>
+            <div style="font-size: 17px">
+              I found three flights to Cairo under $250.
+            </div>
+          </div>
+          <div class="type-row">
+            <div class="type-meta"><b>Body</b>15 / 1.6 · 400 · Geist</div>
+            <div style="font-size: 15px">
+              The cheapest is EGY 412, departing Saturday at 7:40 AM.
+            </div>
+          </div>
+          <div class="type-row">
+            <div class="type-meta">
+              <b>Body small</b>13 / 1.55 · 400 · Geist
+            </div>
+            <div style="font-size: 13px; color: var(--text-secondary)">
+              Allow once · Always allow this site · Deny
+            </div>
+          </div>
+          <div class="type-row">
+            <div class="type-meta">
+              <b>Caption / eyebrow</b>11 / 1.4 · 500 · Geist Mono · upper ·
+              0.1em
+            </div>
+            <div
+              class="mono"
+              style="
+                font-size: 11px;
+                font-weight: 500;
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+                color: var(--text-tertiary);
+              "
+            >
+              TOOL CALL · 0.4s
+            </div>
+          </div>
+          <div class="type-row">
+            <div class="type-meta">
+              <b>Code / params</b>13 / 1.7 · 400 · Geist Mono
+            </div>
+            <div class="mono" style="font-size: 13px">
+              { "to": "CAI", "max_price": 250 }
+            </div>
+          </div>
+
+          <p class="note" style="margin-top: var(--sp-6)">
+            Rule of thumb: if a person could copy-paste it into a terminal, it's
+            mono. If it's the agent talking to them, it's Geist.
+          </p>
+        </section>
+
+        <!-- ===================== 03 SPACE & ELEVATION ===================== -->
+        <section id="space" class="section">
+          <div class="eyebrow"><span class="dot"></span> 01 · Foundations</div>
+          <h2>Space &amp; elevation</h2>
+          <p class="section-lede">
+            A 4px base grid. Elevation is built from borders and a faint warm
+            glow rather than drop shadows — on a near-black canvas, light
+            <em>edges</em> read better than soft shadows.
+          </p>
+
+          <div class="subhead">Spacing scale</div>
+          <div>
+            <div class="space-row">
+              <span class="space-label">space-1</span
+              ><span class="space-px">4px</span>
+              <div class="space-bar" style="width: 4px"></div>
+            </div>
+            <div class="space-row">
+              <span class="space-label">space-2</span
+              ><span class="space-px">8px</span>
+              <div class="space-bar" style="width: 8px"></div>
+            </div>
+            <div class="space-row">
+              <span class="space-label">space-3</span
+              ><span class="space-px">12px</span>
+              <div class="space-bar" style="width: 12px"></div>
+            </div>
+            <div class="space-row">
+              <span class="space-label">space-4</span
+              ><span class="space-px">16px</span>
+              <div class="space-bar" style="width: 16px"></div>
+            </div>
+            <div class="space-row">
+              <span class="space-label">space-5</span
+              ><span class="space-px">20px</span>
+              <div class="space-bar" style="width: 20px"></div>
+            </div>
+            <div class="space-row">
+              <span class="space-label">space-6</span
+              ><span class="space-px">24px</span>
+              <div class="space-bar" style="width: 24px"></div>
+            </div>
+            <div class="space-row">
+              <span class="space-label">space-8</span
+              ><span class="space-px">32px</span>
+              <div class="space-bar" style="width: 32px"></div>
+            </div>
+            <div class="space-row">
+              <span class="space-label">space-10</span
+              ><span class="space-px">40px</span>
+              <div class="space-bar" style="width: 40px"></div>
+            </div>
+            <div class="space-row">
+              <span class="space-label">space-12</span
+              ><span class="space-px">48px</span>
+              <div class="space-bar" style="width: 48px"></div>
+            </div>
+            <div class="space-row">
+              <span class="space-label">space-16</span
+              ><span class="space-px">64px</span>
+              <div class="space-bar" style="width: 64px"></div>
+            </div>
+          </div>
+
+          <div class="subhead">Radius</div>
+          <div class="grid grid-5">
+            <div class="swatch">
+              <div
+                class="swatch-fill"
+                style="background: var(--surface-2); border-radius: var(--r-xs)"
+              ></div>
+              <span class="swatch-name">r-xs</span
+              ><span class="swatch-hex">4px</span
+              ><span class="swatch-use">Inline code, small badges</span>
+            </div>
+            <div class="swatch">
+              <div
+                class="swatch-fill"
+                style="background: var(--surface-2); border-radius: var(--r-sm)"
+              ></div>
+              <span class="swatch-name">r-sm</span
+              ><span class="swatch-hex">6px</span
+              ><span class="swatch-use">Buttons, inputs</span>
+            </div>
+            <div class="swatch">
+              <div
+                class="swatch-fill"
+                style="background: var(--surface-2); border-radius: var(--r-md)"
+              ></div>
+              <span class="swatch-name">r-md</span
+              ><span class="swatch-hex">10px</span
+              ><span class="swatch-use">Tool cards, widgets</span>
+            </div>
+            <div class="swatch">
+              <div
+                class="swatch-fill"
+                style="background: var(--surface-2); border-radius: var(--r-lg)"
+              ></div>
+              <span class="swatch-name">r-lg</span
+              ><span class="swatch-hex">14px</span
+              ><span class="swatch-use">Panels, cards</span>
+            </div>
+            <div class="swatch">
+              <div
+                class="swatch-fill"
+                style="background: var(--surface-2); border-radius: var(--r-xl)"
+              ></div>
+              <span class="swatch-name">r-xl</span
+              ><span class="swatch-hex">20px</span
+              ><span class="swatch-use">Omnibox, modals, drawer corners</span>
+            </div>
+          </div>
+
+          <div class="subhead">Elevation</div>
+          <div class="grid grid-3">
+            <div
+              class="card"
+              style="background: var(--surface-0); border-style: dashed"
+            >
+              <div class="small muted mono" style="margin-bottom: 8px">
+                e0 · base
+              </div>
+              <div class="small tertiary">
+                Page canvas. No border, no shadow.
+              </div>
+            </div>
+            <div class="card">
+              <div class="small muted mono" style="margin-bottom: 8px">
+                e1 · raised
+              </div>
+              <div class="small tertiary">
+                1px border-default + surface-1. Cards, tool calls, the omnibox.
+              </div>
+            </div>
+            <div
+              class="card"
+              style="
+                box-shadow:
+                  0 0 0 1px var(--border-strong),
+                  0 24px 48px rgba(0, 0, 0, 0.5),
+                  0 0 32px -8px var(--accent-soft);
+              "
+            >
+              <div class="small muted mono" style="margin-bottom: 8px">
+                e2 · overlay
+              </div>
+              <div class="small tertiary">
+                border-strong + ambient ground shadow + faint accent glow.
+                Permission prompts, modals.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===================== 04 MOTION ===================== -->
+        <section id="motion" class="section">
+          <div class="eyebrow"><span class="dot"></span> 01 · Foundations</div>
+          <h2>Motion</h2>
+          <p class="section-lede">
+            Motion is how this system tells the truth about time. An agent that
+            takes 4 seconds to think should never look the same as one that's
+            stuck — durations and easings are tuned so "still working" and
+            "done" are unmistakable, even out of the corner of your eye.
+          </p>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Token</th>
+                <th>Value</th>
+                <th>Use</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>dur-instant</td>
+                <td>80ms</td>
+                <td class="mono">Press/active feedback</td>
+              </tr>
+              <tr>
+                <td>dur-fast</td>
+                <td>120ms</td>
+                <td class="mono">Hover, focus ring</td>
+              </tr>
+              <tr>
+                <td>dur-base</td>
+                <td>200ms</td>
+                <td class="mono">Default transition (color, opacity)</td>
+              </tr>
+              <tr>
+                <td>dur-slow</td>
+                <td>320ms</td>
+                <td class="mono">Panel/drawer open, orb state change</td>
+              </tr>
+              <tr>
+                <td>dur-deliberate</td>
+                <td>480ms</td>
+                <td class="mono">
+                  Permission card reveal — slow enough to register as "this
+                  needs you"
+                </td>
+              </tr>
+              <tr>
+                <td>ease-standard</td>
+                <td class="mono">cubic-bezier(.4,0,.2,1)</td>
+                <td class="mono">Default for everything</td>
+              </tr>
+              <tr>
+                <td>ease-breath</td>
+                <td class="mono">cubic-bezier(.45,0,.55,1)</td>
+                <td class="mono">Orb glow pulse — symmetrical, calm</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="subhead">Two motifs that recur everywhere</div>
+          <div class="grid grid-2">
+            <div class="card">
+              <div class="mono small tertiary" style="margin-bottom: 10px">
+                PULSE — used for listening / thinking / acting
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="orb-wrap is-thinking" style="--orb-size: 32px">
+                  <div class="orb"></div>
+                </div>
+                <span class="small muted"
+                  >Glow breathes in and out on a 1.2–2.2s loop. Speed =
+                  urgency.</span
+                >
+              </div>
+            </div>
+            <div class="card">
+              <div class="mono small tertiary" style="margin-bottom: 10px">
+                REVEAL — used for streamed text
+              </div>
+              <div class="stream-text" id="motionStreamDemo">
+                Tokens fade up in small clusters, not
+                character-by-character.<span class="cursor"></span>
+              </div>
+            </div>
+          </div>
+          <p class="note" style="margin-top: var(--sp-5)">
+            Reduced motion: all loops collapse to a single static state-color
+            swap (no spin, no pulse). Respected globally via
+            <code class="mono">prefers-reduced-motion</code>.
+          </p>
+        </section>
+
+        <!-- ===================== 05 AGENT STATE MODEL ===================== -->
+        <section id="agent-model" class="section">
+          <div class="eyebrow"><span class="dot"></span> 02 · System</div>
+          <h2>Agent state model</h2>
+          <p class="section-lede">
+            Six principles, one state machine. Everything in the agentic
+            components section below is an expression of this model — learn it
+            once and every screen in the extension reads the same way.
+          </p>
+
+          <div class="grid grid-2" style="margin-bottom: var(--sp-10)">
+            <div class="card">
+              <div class="small" style="font-weight: 600; margin-bottom: 4px">
+                1 · Show the work
+              </div>
+              <div class="small tertiary">
+                Plans and tool calls are visible by default, collapsible — never
+                hidden behind a single "thinking…" spinner.
+              </div>
+            </div>
+            <div class="card">
+              <div class="small" style="font-weight: 600; margin-bottom: 4px">
+                2 · Every mutation is confirmed
+              </div>
+              <div class="small tertiary">
+                Trust-tier color decides whether an action needs your sign-off
+                before it runs.
+              </div>
+            </div>
+            <div class="card">
+              <div class="small" style="font-weight: 600; margin-bottom: 4px">
+                3 · One glanceable status
+              </div>
+              <div class="small tertiary">
+                The orb is the single source of truth for "what is it doing
+                right now," legible from across the room.
+              </div>
+            </div>
+            <div class="card">
+              <div class="small" style="font-weight: 600; margin-bottom: 4px">
+                4 · Honest latency
+              </div>
+              <div class="small tertiary">
+                No spinner ever lies. Stream tokens as they arrive; name what
+                step is slow.
+              </div>
+            </div>
+            <div class="card">
+              <div class="small" style="font-weight: 600; margin-bottom: 4px">
+                5 · Idle is quiet
+              </div>
+              <div class="small tertiary">
+                With nothing running, this is just a fast homepage — search,
+                shortcuts, widgets. The agent recedes.
+              </div>
+            </div>
+            <div class="card">
+              <div class="small" style="font-weight: 600; margin-bottom: 4px">
+                6 · Always interruptible
+              </div>
+              <div class="small tertiary">
+                A stop control is reachable in every active state, never buried
+                in a menu.
+              </div>
+            </div>
+          </div>
+
+          <div class="subhead">The eight states</div>
+          <p class="sub-lede">
+            Click a state below — it drives the orb, the status copy, and (where
+            relevant) the example tool list.
+          </p>
+
+          <div class="card" id="stateDemo">
+            <div
+              class="flex items-center gap-4"
+              style="margin-bottom: var(--sp-5)"
+            >
+              <div
+                class="orb-wrap is-idle"
+                id="modelOrb"
+                style="--orb-size: 48px"
+              >
+                <div class="orb"></div>
+              </div>
+              <div>
+                <div style="font-weight: 600" id="modelStateName">Idle</div>
+                <div class="small tertiary" id="modelStateCopy">
+                  "Ask Vesper anything…" (placeholder, no glow)
+                </div>
+              </div>
+            </div>
+            <div class="flex gap-2" style="flex-wrap: wrap">
+              <button
+                class="btn btn-secondary btn-sm"
+                onclick="setModelState('idle', this)"
+              >
+                Idle
+              </button>
+              <button
+                class="btn btn-secondary btn-sm"
+                onclick="setModelState('listening', this)"
+              >
+                Listening
+              </button>
+              <button
+                class="btn btn-secondary btn-sm"
+                onclick="setModelState('thinking', this)"
+              >
+                Thinking
+              </button>
+              <button
+                class="btn btn-secondary btn-sm"
+                onclick="setModelState('acting', this)"
+              >
+                Acting
+              </button>
+              <button
+                class="btn btn-secondary btn-sm"
+                onclick="setModelState('permission', this)"
+              >
+                Needs permission
+              </button>
+              <button
+                class="btn btn-secondary btn-sm"
+                onclick="setModelState('streaming', this)"
+              >
+                Streaming
+              </button>
+              <button
+                class="btn btn-secondary btn-sm"
+                onclick="setModelState('done', this)"
+              >
+                Done
+              </button>
+              <button
+                class="btn btn-secondary btn-sm"
+                onclick="setModelState('error', this)"
+              >
+                Error
+              </button>
+            </div>
+          </div>
+
+          <table style="margin-top: var(--sp-6)">
+            <thead>
+              <tr>
+                <th>State</th>
+                <th>Orb treatment</th>
+                <th>Copy example</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>idle</td>
+                <td>Ring paused, 28% opacity</td>
+                <td>"Ask Vesper anything…"</td>
+              </tr>
+              <tr>
+                <td>listening</td>
+                <td>Ring brightens, 1.6s glow pulse</td>
+                <td>"Listening…"</td>
+              </tr>
+              <tr>
+                <td>thinking</td>
+                <td>Ring spins 1s/rev, amber→mint sweep</td>
+                <td>"Thinking for 3s…"</td>
+              </tr>
+              <tr>
+                <td>acting</td>
+                <td>Ring spins 0.55s/rev, fastest state</td>
+                <td>"Running search_flights…"</td>
+              </tr>
+              <tr>
+                <td>permission</td>
+                <td>Ring freezes, outer glow pulses red-amber</td>
+                <td>"Needs your approval"</td>
+              </tr>
+              <tr>
+                <td>streaming</td>
+                <td>Ring slows, sweep flips to mint→amber</td>
+                <td>(response streams in)</td>
+              </tr>
+              <tr>
+                <td>done</td>
+                <td>Ring settles solid mint, no motion</td>
+                <td>"Done"</td>
+              </tr>
+              <tr>
+                <td>error</td>
+                <td>Solid red, flashes 3× then idles</td>
+                <td>"Couldn't complete — Retry"</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- ===================== 06 CORE COMPONENTS ===================== -->
+        <section id="core" class="section">
+          <div class="eyebrow"><span class="dot"></span> 02 · System</div>
+          <h2>Core components</h2>
+          <p class="section-lede">
+            The non-agentic primitives every screen is built from.
+          </p>
+
+          <div class="subhead">Buttons</div>
+          <div class="flex gap-3 items-center" style="flex-wrap: wrap">
+            <button class="btn btn-primary">Primary</button>
+            <button class="btn btn-secondary">Secondary</button>
+            <button class="btn btn-ghost">Ghost</button>
+            <button class="btn btn-danger">Destructive</button>
+            <button class="btn btn-primary" disabled>Disabled</button>
+            <button class="btn btn-stop"><span class="sq"></span> Stop</button>
+          </div>
+
+          <div class="subhead">Inputs</div>
+          <div class="grid grid-2">
+            <div class="flex-col gap-2">
+              <input class="field" placeholder="Search or ask the agent…" />
+              <textarea
+                class="field"
+                placeholder="Longer prompt or note…"
+                rows="3"
+              ></textarea>
+            </div>
+            <div class="flex-col gap-3">
+              <label class="flex items-center gap-3 small muted"
+                ><span class="toggle"
+                  ><input type="checkbox" checked /><span class="track"></span
+                  ><span class="thumb"></span
+                ></span>
+                Always allow read-only tools</label
+              >
+              <label class="flex items-center gap-3 small muted"
+                ><span class="toggle"
+                  ><input type="checkbox" /><span class="track"></span
+                  ><span class="thumb"></span
+                ></span>
+                Confirm before every write</label
+              >
+            </div>
+          </div>
+
+          <div class="subhead">Badges &amp; pills</div>
+          <div class="flex gap-3 items-center" style="flex-wrap: wrap">
+            <span class="badge badge-mint">● read-only</span>
+            <span class="badge badge-accent">● write</span>
+            <span class="badge badge-red">● destructive</span>
+            <span class="badge badge-neutral">draft</span>
+            <span class="pillrow"
+              ><button class="pill active">Ask</button
+              ><button class="pill">Agent</button
+              ><button class="pill">Search</button></span
+            >
+          </div>
+
+          <div class="subhead">Tooltip &amp; toast</div>
+          <div class="flex gap-4 items-center">
+            <button class="btn btn-secondary" data-tooltip="Opens in a new tab">
+              Hover me
+            </button>
+            <button
+              class="btn btn-secondary"
+              onclick="showToast('Saved to bookmarks', 'mint')"
+            >
+              Trigger a toast
+            </button>
+          </div>
+        </section>
+
+        <!-- ===================== 07 HOMEPAGE SURFACE ===================== -->
+        <section id="homepage" class="section">
+          <div class="eyebrow"><span class="dot"></span> 02 · System</div>
+          <h2>Homepage surface</h2>
+          <p class="section-lede">
+            The calm, agent-free baseline. When idle, this is what someone sees
+            on every new tab — fast, quiet, useful without the agent saying a
+            word.
+          </p>
+
+          <div class="card">
+            <div class="mock-topbar" style="margin-bottom: 24px">
+              <div>
+                <div class="mock-clock">09:24</div>
+                <div class="mock-date">Friday, June 19</div>
+              </div>
+              <div class="mock-icons">⚙ ⤢</div>
+            </div>
+            <div class="omnibox">
+              <div class="omnibox-row">
+                <div class="orb-wrap is-idle" style="--orb-size: 22px">
+                  <div class="orb"></div>
+                </div>
+                <div class="omnibox-input" style="color: var(--text-tertiary)">
+                  Search the web, or ask the agent to do something…
+                </div>
+                <span class="tertiary">⌘K</span>
+              </div>
+              <div class="omnibox-foot">
+                <span class="pillrow"
+                  ><button class="pill active">Search</button
+                  ><button class="pill">Agent</button></span
+                >
+                <span class="small tertiary">↵</span>
+              </div>
+            </div>
+            <div class="shortcut-grid">
+              <div class="shortcut-tile">
+                <div class="tile-icon">M</div>
+                <span class="tile-label">Mail</span>
+              </div>
+              <div class="shortcut-tile">
+                <div class="tile-icon">C</div>
+                <span class="tile-label">Calendar</span>
+              </div>
+              <div class="shortcut-tile">
+                <div class="tile-icon">R</div>
+                <span class="tile-label">Repo</span>
+              </div>
+              <div class="shortcut-tile">
+                <div class="tile-icon">D</div>
+                <span class="tile-label">Docs</span>
+              </div>
+              <div class="shortcut-tile">
+                <div class="tile-icon">T</div>
+                <span class="tile-label">Tasks</span>
+              </div>
+              <div class="shortcut-tile">
+                <div class="tile-icon">+</div>
+                <span class="tile-label">Add</span>
+              </div>
+            </div>
+            <div class="widget-row">
+              <div class="widget">
+                <div class="widget-title">Recent tabs</div>
+                <div class="small muted">
+                  3 tabs · n8n workflow, AWS console, docs
+                </div>
+              </div>
+              <div class="widget">
+                <div class="widget-title">Weather</div>
+                <div class="small muted">31°C, clear</div>
+              </div>
+              <div class="widget">
+                <div class="widget-title">Clipboard</div>
+                <div class="small muted mono">TURN_SERVER_URL=…</div>
+              </div>
+            </div>
+          </div>
+          <p class="note" style="margin-top: var(--sp-5)">
+            Notice the orb sits inside the omnibox at idle opacity — present but
+            not asking for attention. It only brightens once something is
+            actually happening.
+          </p>
+        </section>
+
+        <!-- ===================== 08 AGENTIC COMPONENTS ===================== -->
+        <section id="agentic" class="section">
+          <div class="eyebrow"><span class="dot"></span> 02 · System</div>
+          <h2>Agentic components</h2>
+          <p class="section-lede">
+            The components that make this an agent surface rather than a search
+            page. Each one expresses the trust-tier and state-model rules above
+            in a specific UI shape.
+          </p>
+
+          <!-- Prompt bar -->
+          <div class="subhead">Prompt / command bar</div>
+          <p class="sub-lede">
+            Same control as the idle omnibox, but its anatomy is fixed: agent
+            avatar (state), input, mode pills, context chips, send. Mode
+            switches what "enter" does — search vs. delegate to the agent.
+          </p>
+          <div class="card">
+            <div class="omnibox" style="margin: 0">
+              <div class="omnibox-row">
+                <div class="orb-wrap is-listening" style="--orb-size: 22px">
+                  <div class="orb"></div>
+                </div>
+                <div class="omnibox-input" style="color: var(--text-primary)">
+                  Find flights to Cairo next weekend…
+                </div>
+                <button class="btn btn-icon btn-ghost" data-tooltip="Attach">
+                  📎
+                </button>
+                <button class="btn btn-icon btn-ghost" data-tooltip="Voice">
+                  🎙
+                </button>
+              </div>
+              <div class="omnibox-foot">
+                <span class="pillrow"
+                  ><button class="pill">Ask</button
+                  ><button class="pill active">Agent</button
+                  ><button class="pill">Search</button></span
+                >
+                <div class="flex gap-2 items-center">
+                  <span class="chip"
+                    ><span class="favicon">2</span>using 2 open tabs</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Thinking disclosure -->
+          <div class="subhead">Thinking disclosure</div>
+          <p class="sub-lede">
+            Reasoning is collapsed by default — present for trust, out of the
+            way for speed.
+          </p>
+          <details>
+            <summary>
+              <span class="mono small tertiary">Thought for 3s</span
+              ><svg
+                class="chev"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </summary>
+            <div class="details-body">
+              <p
+                class="mono small"
+                style="color: var(--text-secondary); line-height: 1.8"
+              >
+                "Next weekend" → Sat 21–Sun 22 Jun. User's calendar shows no
+                conflicts Saturday morning. Cheapest result (EGY 412, $214)
+                departs 7:40 AM — leaves a 2hr buffer before typical airport
+                requirements. Proposing that one rather than the absolute
+                cheapest red-eye, which lands at an unreasonable hour.
+              </p>
+            </div>
+          </details>
+
+          <!-- Plan checklist -->
+          <div class="subhead">Plan checklist</div>
+          <p class="sub-lede">
+            A multi-step plan rendered as a live checklist, not a single
+            progress bar — each step names its tool and trust tier before it
+            runs.
+          </p>
+          <div class="card">
+            <div class="plan">
+              <div class="plan-step">
+                <span class="status-icon done"
+                  ><svg
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    stroke="#06231c"
+                    stroke-width="2.5"
+                  >
+                    <path d="M3 8l3 3 7-7" /></svg
+                ></span>
+                <div class="plan-text">
+                  <span class="plan-label"
+                    ><span class="trust-dot read"></span>Search flights to
+                    Cairo</span
+                  ><span class="plan-tool">search_flights · 1.2s</span>
+                </div>
+              </div>
+              <div class="plan-step is-current">
+                <span class="status-icon active"></span>
+                <div class="plan-text">
+                  <span class="plan-label"
+                    ><span class="trust-dot read"></span>Check calendar
+                    availability</span
+                  ><span class="plan-tool"
+                    >get_calendar_availability · running…</span
+                  >
+                </div>
+              </div>
+              <div class="plan-step is-pending">
+                <span class="status-icon pending"></span>
+                <div class="plan-text">
+                  <span class="plan-label tertiary"
+                    ><span class="trust-dot write"></span>Add cheapest flight to
+                    calendar</span
+                  ><span class="plan-tool"
+                    >create_calendar_event · waiting</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tool call cards -->
+          <div class="subhead">Tool-call card</div>
+          <p class="sub-lede">
+            The left edge strip carries the trust-tier color. Parameters and
+            result are always inspectable, collapsed by default for read
+            actions, expanded by default for anything destructive.
+          </p>
+
+          <details class="tool-card" open>
+            <summary>
+              <div class="tool-head">
+                <div class="tool-icon">🔍</div>
+                <div>
+                  <div class="tool-name">search_flights</div>
+                  <div class="small tertiary">Read-only · 1.2s</div>
+                </div>
+              </div>
+              <span class="badge badge-mint">success</span>
+              <svg
+                class="chev"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </summary>
+            <div class="details-body">
+              <div class="codeblock-label">Parameters</div>
+              <div class="codeblock">
+                { <span class="k">"to"</span>: <span class="s">"CAI"</span>,
+                <span class="k">"dates"</span>:
+                <span class="s">"2026-06-20..2026-06-21"</span>,
+                <span class="k">"max_results"</span>: 5 }
+              </div>
+              <div class="codeblock-label">Result</div>
+              <div class="codeblock">
+                3 flights found
+                <span class="c">// cheapest: EGY 412, $214, 07:40 Sat</span>
+              </div>
+            </div>
+          </details>
+
+          <details class="tool-card write">
+            <summary>
+              <div class="tool-head">
+                <div class="tool-icon">📅</div>
+                <div>
+                  <div class="tool-name">create_calendar_event</div>
+                  <div class="small tertiary">Writes to your calendar</div>
+                </div>
+              </div>
+              <span class="badge badge-accent">needs approval</span>
+              <svg
+                class="chev"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </summary>
+            <div class="details-body">
+              <div class="codeblock-label">Parameters</div>
+              <div class="codeblock">
+                { <span class="k">"title"</span>:
+                <span class="s">"Flight to Cairo — EGY 412"</span>,
+                <span class="k">"start"</span>:
+                <span class="s">"2026-06-20T07:40"</span>,
+                <span class="k">"calendar"</span>:
+                <span class="s">"primary"</span> }
+              </div>
+              <p class="note" style="margin-top: 10px">
+                Will not run until approved in the permission prompt below.
+              </p>
+            </div>
+          </details>
+
+          <!-- Permission prompt -->
+          <div class="subhead">Permission prompt</div>
+          <p class="sub-lede">
+            Appears inline, beside the step that triggered it — never a
+            disconnected modal. Three choices, always, in this order: narrow →
+            broad → no.
+          </p>
+          <div
+            class="card"
+            style="
+              background: var(--accent-softer);
+              border-color: var(--accent-soft);
+            "
+            id="permDemo1"
+          >
+            <div class="pc-row" style="margin-bottom: 8px">
+              <span class="badge badge-accent">Needs approval</span>
+            </div>
+            <div class="pc-row" style="font-size: 14px; margin-bottom: 14px">
+              Add <strong>"Flight to Cairo — EGY 412"</strong> ($214) to your
+              calendar for Saturday, 7:40 AM?
+            </div>
+            <div class="pc-actions">
+              <button
+                class="btn btn-primary btn-sm"
+                onclick="resolvePermDemo(this, 'Allowed once')"
+              >
+                Allow once
+              </button>
+              <button
+                class="btn btn-secondary btn-sm"
+                onclick="resolvePermDemo(this, 'Always allowed for Calendar')"
+              >
+                Always allow this app
+              </button>
+              <button
+                class="btn btn-secondary btn-sm"
+                onclick="resolvePermDemo(this, 'Denied')"
+              >
+                Deny
+              </button>
+            </div>
+          </div>
+
+          <!-- Streaming bubble -->
+          <div class="subhead">Streaming answer + citations</div>
+          <p class="sub-lede">
+            Text reveals as it streams; sources the agent actually read are
+            shown as chips, never invented.
+          </p>
+          <div class="card stream-demo">
+            <div class="flex gap-3" style="margin-bottom: 4px">
+              <div class="orb-wrap is-done" style="--orb-size: 22px">
+                <div class="orb"></div>
+              </div>
+              <div style="flex: 1">
+                <div
+                  class="stream-text"
+                  data-full="Booked. EGY 412 to Cairo, Saturday 7:40 AM, $214 — added to your calendar with a reminder 3 hours before departure."
+                >
+                  Booked. EGY 412 to Cairo, Saturday 7:40 AM, $214 — added to
+                  your calendar with a reminder 3 hours before departure.
+                </div>
+                <div class="citerow">
+                  <span class="chip"
+                    ><span class="favicon">F</span>flightscan.io</span
+                  >
+                  <span class="chip"
+                    ><span class="favicon">F</span>fareradar.com</span
+                  >
+                </div>
+              </div>
+            </div>
+            <div
+              class="flex"
+              style="justify-content: flex-end; margin-top: 10px"
+            >
+              <button class="btn btn-ghost btn-sm" onclick="replayStream(this)">
+                ↺ Replay stream
+              </button>
+            </div>
+          </div>
+
+          <!-- Action timeline -->
+          <div class="subhead">Action timeline</div>
+          <p class="sub-lede">
+            A persistent, undoable log of everything the agent has actually done
+            — the audit trail that makes "trust it more over time" possible.
+          </p>
+          <div class="card">
+            <div class="timeline">
+              <div class="tl-item">
+                <span class="tl-dot"></span
+                ><span class="tl-time">09:24:01</span>
+                <div class="tl-text">
+                  Searched flights to Cairo
+                  <span class="tertiary">· search_flights</span>
+                </div>
+              </div>
+              <div class="tl-item">
+                <span class="tl-dot"></span
+                ><span class="tl-time">09:24:02</span>
+                <div class="tl-text">
+                  Checked calendar availability
+                  <span class="tertiary">· get_calendar_availability</span>
+                </div>
+              </div>
+              <div class="tl-item">
+                <span class="tl-dot write"></span
+                ><span class="tl-time">09:24:09</span>
+                <div class="tl-text">
+                  Added "Flight to Cairo — EGY 412" to calendar
+                  <a
+                    href="#"
+                    onclick="
+                      event.preventDefault();
+                      showToast('Event removed', 'red');
+                    "
+                    >Undo</a
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Diff view -->
+          <div class="subhead">Diff view</div>
+          <p class="sub-lede">
+            For any edit to existing data — bookmarks, settings, files — shown
+            with the same insert/remove colors as the editor.
+          </p>
+          <div class="card" style="padding: var(--sp-3)">
+            <div class="diffline ctx">"reminder_minutes_before": 60,</div>
+            <div class="diffline rem">- "calendar": "work",</div>
+            <div class="diffline add">+ "calendar": "primary",</div>
+            <div class="diffline ctx">"title": "Flight to Cairo — EGY 412"</div>
+          </div>
+
+          <!-- Stop control -->
+          <div class="subhead">Stop / interrupt control</div>
+          <p class="sub-lede">
+            Visible the entire time the agent is acting — pinned, never inside
+            an overflow menu.
+          </p>
+          <div class="flex items-center gap-3">
+            <div class="orb-wrap is-acting" style="--orb-size: 26px">
+              <div class="orb"></div>
+            </div>
+            <span class="small muted">Running create_calendar_event…</span>
+            <button class="btn btn-stop"><span class="sq"></span> Stop</button>
+          </div>
+        </section>
+
+        <!-- ===================== 09 PAGE ARCHITECTURE ===================== -->
+        <section id="architecture" class="section">
+          <div class="eyebrow"><span class="dot"></span> 02 · System</div>
+          <h2>Page architecture</h2>
+          <p class="section-lede">
+            The components assembled into the actual extension: the idle
+            homepage on the left, the agent drawer sliding in on the right once
+            a task is delegated to it.
+          </p>
+
+          <div class="browser-frame">
+            <div class="chrome-bar">
+              <div class="chrome-dots">
+                <span></span><span></span><span></span>
+              </div>
+              <div class="chrome-url">vesper://new-tab</div>
+            </div>
+            <div class="mockpage-wrap">
+              <div class="mockpage">
+                <div class="mock-topbar">
+                  <div>
+                    <div class="mock-clock">09:24</div>
+                    <div class="mock-date">Friday, June 19</div>
+                  </div>
+                  <div class="mock-icons">⚙</div>
+                </div>
+                <div class="omnibox">
+                  <div class="omnibox-row">
+                    <div class="orb-wrap is-acting" style="--orb-size: 22px">
+                      <div class="orb"></div>
+                    </div>
+                    <div
+                      class="omnibox-input"
+                      style="color: var(--text-primary)"
+                    >
+                      Find flights to Cairo next weekend…
+                    </div>
+                  </div>
+                </div>
+                <div class="shortcut-grid">
+                  <div class="shortcut-tile">
+                    <div class="tile-icon">M</div>
+                    <span class="tile-label">Mail</span>
+                  </div>
+                  <div class="shortcut-tile">
+                    <div class="tile-icon">C</div>
+                    <span class="tile-label">Calendar</span>
+                  </div>
+                  <div class="shortcut-tile">
+                    <div class="tile-icon">R</div>
+                    <span class="tile-label">Repo</span>
+                  </div>
+                  <div class="shortcut-tile">
+                    <div class="tile-icon">D</div>
+                    <span class="tile-label">Docs</span>
+                  </div>
+                  <div class="shortcut-tile">
+                    <div class="tile-icon">T</div>
+                    <span class="tile-label">Tasks</span>
+                  </div>
+                  <div class="shortcut-tile">
+                    <div class="tile-icon">+</div>
+                    <span class="tile-label">Add</span>
+                  </div>
+                </div>
+              </div>
+              <div class="agent-drawer">
+                <div class="drawer-head">
+                  <div class="orb-wrap is-acting" style="--orb-size: 24px">
+                    <div class="orb"></div>
+                  </div>
+                  <span class="small" style="font-weight: 600">Agent</span>
+                </div>
+                <div class="plan">
+                  <div class="plan-step">
+                    <span class="status-icon done"
+                      ><svg
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        stroke="#06231c"
+                        stroke-width="2.5"
+                      >
+                        <path d="M3 8l3 3 7-7" /></svg
+                    ></span>
+                    <div class="plan-text">
+                      <span class="plan-label" style="font-size: 12.5px"
+                        >Search flights</span
+                      >
+                    </div>
+                  </div>
+                  <div class="plan-step is-current">
+                    <span class="status-icon active"></span>
+                    <div class="plan-text">
+                      <span class="plan-label" style="font-size: 12.5px"
+                        >Check calendar</span
+                      >
+                    </div>
+                  </div>
+                </div>
+                <button class="btn btn-stop" style="align-self: flex-start">
+                  <span class="sq"></span> Stop
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="subhead">Region map</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Region</th>
+                <th>Width</th>
+                <th>Z-index</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Top bar</td>
+                <td>full width</td>
+                <td>10</td>
+              </tr>
+              <tr>
+                <td>Omnibox / prompt bar</td>
+                <td>620px, centered</td>
+                <td>20</td>
+              </tr>
+              <tr>
+                <td>Shortcut + widget grid</td>
+                <td>620px, centered</td>
+                <td>1</td>
+              </tr>
+              <tr>
+                <td>Agent drawer</td>
+                <td>300–360px, right edge</td>
+                <td>30</td>
+              </tr>
+              <tr>
+                <td>Permission prompt</td>
+                <td>inline within drawer/card</td>
+                <td>40</td>
+              </tr>
+              <tr>
+                <td>Toast layer</td>
+                <td>320px, bottom-right</td>
+                <td>50</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="note" style="margin-top: var(--sp-4)">
+            Grid: 12-column, 24px gutter, content max-width 1120px. Breakpoints:
+            640 / 960 / 1280px. Below 960px the agent drawer becomes a
+            full-screen sheet instead of a side panel.
+          </p>
+        </section>
+
+        <!-- ===================== 10 ACCESSIBILITY ===================== -->
+        <section id="a11y" class="section">
+          <div class="eyebrow"><span class="dot"></span> 03 · Reference</div>
+          <h2>Accessibility</h2>
+          <p class="section-lede">
+            An agent that narrates itself only visually has failed half its
+            users. Every status here is also exposed in text and structure.
+          </p>
+
+          <div class="subhead">Contrast — text on surface-0 (#101010)</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Token</th>
+                <th>Hex</th>
+                <th>Ratio</th>
+                <th>Result</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>text-primary</td>
+                <td>#FFFFFF</td>
+                <td>19.0:1</td>
+                <td>AAA</td>
+              </tr>
+              <tr>
+                <td>text-secondary</td>
+                <td>#A0A0A0</td>
+                <td>7.3:1</td>
+                <td>AAA</td>
+              </tr>
+              <tr>
+                <td>text-tertiary</td>
+                <td>#7E7E7E</td>
+                <td>4.7:1</td>
+                <td>AA (body) — labels/captions only</td>
+              </tr>
+              <tr>
+                <td>accent</td>
+                <td>#FFC799</td>
+                <td>12.6:1</td>
+                <td>AAA</td>
+              </tr>
+              <tr>
+                <td>mint</td>
+                <td>#99FFE4</td>
+                <td>16.1:1</td>
+                <td>AAA</td>
+              </tr>
+              <tr>
+                <td>red</td>
+                <td>#FF8080</td>
+                <td>7.8:1</td>
+                <td>AAA</td>
+              </tr>
+              <tr>
+                <td>#000 on accent</td>
+                <td>button label</td>
+                <td>13.9:1</td>
+                <td>AAA</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="grid grid-2" style="margin-top: var(--sp-8)">
+            <div class="card">
+              <div style="font-weight: 600; margin-bottom: 6px">
+                Never color-only
+              </div>
+              <p class="small tertiary">
+                Trust tier is color + a left-edge position + the word
+                "read-only" / "needs approval" in the badge text. Status icons
+                use shape (circle outline → spinner ring → check / × ) in
+                addition to mint/red.
+              </p>
+            </div>
+            <div class="card">
+              <div style="font-weight: 600; margin-bottom: 6px">
+                Live regions
+              </div>
+              <p class="small tertiary">
+                The orb's state label and the streaming text container are both
+                <code class="mono">aria-live="polite"</code>, so a screen reader
+                announces "Thinking… Acting… Done" without re-reading the whole
+                transcript.
+              </p>
+            </div>
+            <div class="card">
+              <div style="font-weight: 600; margin-bottom: 6px">Focus</div>
+              <p class="small tertiary">
+                2px accent outline, 2px offset, on every interactive element —
+                including inside the agent drawer and permission prompt, which
+                trap focus while open.
+              </p>
+            </div>
+            <div class="card">
+              <div style="font-weight: 600; margin-bottom: 6px">
+                Reduced motion
+              </div>
+              <p class="small tertiary">
+                All spins, pulses and reveals collapse to instant state swaps
+                under <code class="mono">prefers-reduced-motion: reduce</code>.
+                Nothing here is motion-only.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===================== 11 TOKENS ===================== -->
+        <section id="tokens" class="section">
+          <div class="eyebrow"><span class="dot"></span> 03 · Reference</div>
+          <h2>Tokens</h2>
+          <p class="section-lede">
+            The full CSS custom-property block used to build this page. Drop it
+            at the top of your stylesheet.
+          </p>
+          <div class="codeblock" style="font-size: 11.5px">
+            :root{<br />
+            &nbsp;&nbsp;<span class="k">--surface-0</span>:#101010;
+            <span class="k">--surface-1</span>:#161616;
+            <span class="k">--surface-2</span>:#1c1c1c;<br />
+            &nbsp;&nbsp;<span class="k">--surface-selected</span>:#232323;
+            <span class="k">--surface-hover</span>:#282828;<br />
+            &nbsp;&nbsp;<span class="k">--border-default</span>:#282828;
+            <span class="k">--border-strong</span>:#343434;<br />
+            &nbsp;&nbsp;<span class="k">--text-primary</span>:#ffffff;
+            <span class="k">--text-secondary</span>:#a0a0a0;
+            <span class="k">--text-tertiary</span>:#7e7e7e;
+            <span class="k">--text-disabled</span>:#505050;<br />
+            &nbsp;&nbsp;<span class="k">--accent</span>:#ffc799;
+            <span class="k">--accent-hover</span>:#ffcfa8;
+            <span class="k">--accent-soft</span>:#ffc79926;<br />
+            &nbsp;&nbsp;<span class="k">--mint</span>:#99ffe4;
+            <span class="k">--mint-soft</span>:#99ffe426;<br />
+            &nbsp;&nbsp;<span class="k">--red</span>:#ff8080;
+            <span class="k">--red-soft</span>:#ff808026;<br />
+            &nbsp;&nbsp;<span class="k">--selection</span>:#ffffff25;<br />
+            &nbsp;&nbsp;<span class="k">--font-sans</span>:'Geist',sans-serif;
+            <span class="k">--font-mono</span>:'Geist Mono',monospace;<br />
+            }
+          </div>
+          <p class="note" style="margin-top: var(--sp-5)">
+            Full machine-readable versions (<code class="mono">tokens.css</code
+            >, <code class="mono">tokens.json</code>) are attached alongside
+            this file. Colors are sourced from
+            <a
+              href="https://github.com/raunofreiberg/vesper"
+              target="_blank"
+              rel="noopener"
+              >Vesper</a
+            >
+            by Rauno Freiberg.
+          </p>
+        </section>
+      </main>
+    </div>
+
+    <div class="toast-region" id="toastRegion" aria-live="polite"></div>
+
+    <script>
+      /* ---------- toast ---------- */
+      function showToast(msg, kind) {
+        try {
+          var region = document.getElementById("toastRegion");
+          var el = document.createElement("div");
+          el.className = "toast";
+          var dotColor =
+            kind === "red"
+              ? "var(--red)"
+              : kind === "accent"
+                ? "var(--accent)"
+                : "var(--mint)";
+          el.innerHTML =
+            '<span style="width:7px;height:7px;border-radius:50%;background:' +
+            dotColor +
+            ';flex:0 0 auto;"></span><span>' +
+            msg +
+            "</span>";
+          region.appendChild(el);
+          setTimeout(function () {
+            el.remove();
+          }, 3200);
+        } catch (e) {}
+      }
+
+      /* ---------- model state demo ---------- */
+      var modelCopy = {
+        idle: '"Ask Vesper anything…" (placeholder, no glow)',
+        listening: '"Listening…" — ring brightens, 1.6s pulse',
+        thinking: '"Thinking for 3s…" — ring spins 1s/rev',
+        acting: '"Running search_flights…" — fastest spin, 0.55s/rev',
+        permission: '"Needs your approval" — ring frozen, red-amber pulse',
+        streaming: "Response streams in — sweep flips mint→amber",
+        done: '"Done" — solid mint, no motion',
+        error: "Couldn't complete — Retry — flashes red 3×",
+      };
+      var modelNames = {
+        idle: "Idle",
+        listening: "Listening",
+        thinking: "Thinking",
+        acting: "Acting",
+        permission: "Needs permission",
+        streaming: "Streaming",
+        done: "Done",
+        error: "Error",
+      };
+      function setModelState(state, btn) {
+        var orb = document.getElementById("modelOrb");
+        orb.className = "orb-wrap is-" + state;
+        document.getElementById("modelStateName").textContent =
+          modelNames[state];
+        document.getElementById("modelStateCopy").textContent =
+          modelCopy[state];
+        var siblings = btn.parentElement.querySelectorAll(".btn");
+        siblings.forEach(function (b) {
+          b.classList.remove("btn-primary");
+          b.classList.add("btn-secondary");
+        });
+        btn.classList.remove("btn-secondary");
+        btn.classList.add("btn-primary");
+      }
+
+      /* ---------- permission demo (standalone, in agentic section) ---------- */
+      function resolvePermDemo(btn, label) {
+        var card = btn.closest(".card");
+        card.querySelectorAll("button").forEach(function (b) {
+          b.disabled = true;
+        });
+        var tag = document.createElement("div");
+        tag.className = "small";
+        tag.style.marginTop = "10px";
+        tag.style.color = "var(--mint)";
+        tag.textContent = "✓ " + label;
+        card.appendChild(tag);
+        showToast(label, "mint");
+      }
+
+      /* ---------- stream replay demo ---------- */
+      function replayStream(btn) {
+        var wrap = btn.closest(".stream-demo");
+        var el = wrap.querySelector(".stream-text");
+        var full = el.getAttribute("data-full");
+        el.textContent = "";
+        var cursor = document.createElement("span");
+        cursor.className = "cursor";
+        el.appendChild(cursor);
+        var words = full.split(" ");
+        var i = 0;
+        var iv = setInterval(function () {
+          if (i >= words.length) {
+            clearInterval(iv);
+            cursor.remove();
+            return;
+          }
+          var node = document.createTextNode((i > 0 ? " " : "") + words[i]);
+          el.insertBefore(node, cursor);
+          i++;
+        }, 55);
+      }
+
+      /* ---------- hero end-to-end orchestration ---------- */
+      var heroRunning = false;
+      function heroSetOrb(state) {
+        document.getElementById("heroOrb").className = "orb-wrap is-" + state;
+        document.getElementById("heroOrbBig").className =
+          "orb-wrap is-" + state;
+      }
+      function heroSetStep(n, status) {
+        var step = document.querySelector(
+          '#heroPlan .plan-step[data-step="' + n + '"]',
+        );
+        step.className =
+          "plan-step is-" + (status === "active" ? "current" : status);
+        var icon = step.querySelector(".status-icon");
+        icon.className = "status-icon " + status;
+        icon.innerHTML =
+          status === "done"
+            ? '<svg viewBox="0 0 16 16" fill="none" stroke="#06231c" stroke-width="2.5"><path d="M3 8l3 3 7-7"/></svg>'
+            : "";
+      }
+      function sleep(ms) {
+        return new Promise(function (res) {
+          setTimeout(res, ms);
+        });
+      }
+
+      async function runHeroDemo() {
+        if (heroRunning) return;
+        heroRunning = true;
+        var runBtn = document.getElementById("heroRunBtn");
+        runBtn.disabled = true;
+
+        // reset
+        heroSetOrb("idle");
+        document.getElementById("heroStatusText").textContent = "Idle";
+        [1, 2, 3].forEach(function (n) {
+          heroSetStep(n, "pending");
+        });
+        document.getElementById("heroPermission").classList.remove("show");
+        document.getElementById("heroStreamWrap").style.display = "none";
+        document.getElementById("heroStreamText").textContent = "";
+
+        await sleep(300);
+        heroSetOrb("listening");
+        document.getElementById("heroStatusText").textContent = "Listening";
+        await sleep(700);
+        heroSetOrb("thinking");
+        document.getElementById("heroStatusText").textContent = "Thinking";
+        await sleep(1100);
+
+        heroSetOrb("acting");
+        document.getElementById("heroStatusText").textContent = "Acting";
+        heroSetStep(1, "active");
+        await sleep(750);
+        heroSetStep(1, "done");
+        heroSetStep(2, "active");
+        await sleep(750);
+        heroSetStep(2, "done");
+
+        heroSetOrb("permission");
+        document.getElementById("heroStatusText").textContent =
+          "Needs approval";
+        document.getElementById("heroPermission").classList.add("show");
+        heroRunning = false; // allow user to interact with permission buttons; run button stays disabled until resolved
+      }
+
+      async function heroResolvePermission(allowed, btn) {
+        var card = document.getElementById("heroPermission");
+        card.querySelectorAll("button").forEach(function (b) {
+          b.disabled = true;
+        });
+        if (!allowed) {
+          heroSetStep(3, "failed");
+          heroSetOrb("error");
+          document.getElementById("heroStatusText").textContent = "Denied";
+          showToast("Action denied — nothing was added", "red");
+          await sleep(900);
+          heroSetOrb("idle");
+          document.getElementById("heroStatusText").textContent = "Idle";
+          card.classList.remove("show");
+          document.getElementById("heroRunBtn").disabled = false;
+          return;
+        }
+        heroSetOrb("acting");
+        document.getElementById("heroStatusText").textContent = "Acting";
+        heroSetStep(3, "active");
+        await sleep(800);
+        heroSetStep(3, "done");
+        card.classList.remove("show");
+
+        heroSetOrb("streaming");
+        document.getElementById("heroStatusText").textContent = "Streaming";
+        var wrap = document.getElementById("heroStreamWrap");
+        var el = document.getElementById("heroStreamText");
+        wrap.style.display = "block";
+        el.textContent = "";
+        var cursor = document.createElement("span");
+        cursor.className = "cursor";
+        el.appendChild(cursor);
+        var full =
+          "Booked. EGY 412 to Cairo, Saturday 7:40 AM, $214 — added to your calendar.";
+        var words = full.split(" ");
+        for (var i = 0; i < words.length; i++) {
+          el.insertBefore(
+            document.createTextNode((i > 0 ? " " : "") + words[i]),
+            cursor,
+          );
+          await sleep(60);
+        }
+        cursor.remove();
+        await sleep(300);
+        heroSetOrb("done");
+        document.getElementById("heroStatusText").textContent = "Done";
+        document.getElementById("heroRunBtn").disabled = false;
+      }
+
+      /* ---------- nav active state on scroll (lightweight) ---------- */
+      (function () {
+        var links = Array.prototype.slice.call(
+          document.querySelectorAll(".navlink"),
+        );
+        var sections = links
+          .map(function (l) {
+            return document.querySelector(l.getAttribute("href"));
+          })
+          .filter(Boolean);
+        window.addEventListener(
+          "scroll",
+          function () {
+            var pos = window.scrollY + 120;
+            var current = sections[0];
+            sections.forEach(function (s) {
+              if (s.offsetTop <= pos) current = s;
+            });
+            links.forEach(function (l) {
+              l.style.background = "";
+              l.style.color = "";
+            });
+            var idx = sections.indexOf(current);
+            if (idx > -1) {
+              links[idx].style.background = "var(--surface-1)";
+              links[idx].style.color = "var(--text-primary)";
+            }
+          },
+          { passive: true },
+        );
+      })();
+    </script>
+  </body>
+</html>

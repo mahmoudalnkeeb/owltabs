@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OwlTabs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- Topbar -->
+    <header class="nt-topbar" id="nt-topbar"></header>
+
+    <!-- Main Content -->
+    <main class="nt-main">
+      <!-- Hero Section -->
+      <section class="nt-hero fade-up delay-1" id="nt-hero">
+        <div class="omnibox" id="nt-omnibox" role="search"></div>
+        <nav class="ql-grid" aria-label="Quick links" id="nt-quicklinks"></nav>
+      </section>
+
+      <!-- Feed Section -->
+      <section class="nt-feed-zone fade-up delay-2" id="nt-feed-zone">
+        <div class="feed-filterbar" id="nt-feed-filterbar"></div>
+        <div class="feed-grid" id="nt-feed-grid"></div>
+      </section>
+    </main>
+
+    <!-- AI Panel -->
+    <aside
+      class="ai-panel"
+      id="nt-ai-panel"
+      aria-label="AI assistant"
+      hidden
+    ></aside>
+
+    <!-- Settings Drawer -->
+    <aside
+      class="settings-drawer"
+      id="nt-settings"
+      aria-label="Settings"
+      hidden
+    ></aside>
+
+    <!-- Backdrop -->
+    <div class="nt-backdrop" id="nt-backdrop" hidden></div>
+
+    <!-- Toast Region -->
+    <div class="toast-region" id="toast-region" aria-live="polite"></div>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+.npm
+
+# Logs
+*.log
+logs/
+
+# Environment files
+.env
+.env.*.local
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+.directory
+
+# Build output
+dist/
+.vite/
+
+# Browser extension packaging
+*.zip
+web-ext-artifacts/
+
+# Test / coverage output
+coverage/
+.nyc_output/
+
+# AI agent configs
+AGENTS.md
+.opencode/
+.claude/
+.cursor/
+.codex/
+.aider*
+.windsurfrules
+.cursorrules

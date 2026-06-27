@@ -1,0 +1,30 @@
+{
+  "name": "owltabs",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "A focused new tab with RSS feeds, quick links, and AI.",
+  "author": "Mahmoud Alnakeeb",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mahmoudalnkeeb/owltabs.git"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "echo \"Tests not yet configured for TypeScript\" && exit 0"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.2.0",
+    "@types/sortablejs": "^1.15.9",
+    "sortablejs": "^1.15.7",
+    "typescript": "^6.0.3",
+    "vite": "^8.1.0",
+    "vite-plugin-web-extension": "^4.5.1"
+  },
+  "dependencies": {
+    "dompurify": "^3.4.11",
+    "marked": "^18.0.5"
+  }
+}

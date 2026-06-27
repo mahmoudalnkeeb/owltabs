@@ -1,0 +1,124 @@
+/* ============================================================
+   topbar.css — Part 4.1
+   ============================================================ */
+
+.nt-topbar-left {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+}
+
+.nt-clock {
+  font-size: 19px;
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  display: inline-flex;
+  align-items: baseline;
+}
+.nt-clock-digit {
+  display: inline-block;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.nt-clock-digit.is-changed {
+  animation: digitFlip 0.25s var(--ease-out);
+}
+@keyframes digitFlip {
+  0% {
+    opacity: 0.3;
+    transform: translateY(-3px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.nt-date {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-disabled);
+}
+
+.nt-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.nt-icon-btn {
+  appearance: none;
+  background: transparent;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-sm);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  transition:
+    background var(--dur-base) var(--ease-standard),
+    color var(--dur-base);
+}
+.nt-icon-btn:hover {
+  background: var(--surface-1);
+  color: var(--text-secondary);
+}
+.nt-icon-btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Orb */
+.orb-wrap {
+  position: relative;
+  width: var(--orb-size, 22px);
+  height: var(--orb-size, 22px);
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  cursor: text;
+}
+.orb {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+  border: 1px solid var(--border-default);
+  transition:
+    border-color var(--dur-base) var(--ease-standard),
+    background var(--dur-base);
+}
+.orb::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, var(--accent), var(--mint), var(--accent));
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 2px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 2px));
+  animation: orb-spin 3s linear infinite;
+  opacity: 0;
+  transition: opacity var(--dur-slow) var(--ease-standard);
+}
+.orb-wrap.is-active .orb {
+  border-color: transparent;
+  background: var(--surface-2);
+}
+.orb-wrap.is-active .orb::before {
+  opacity: 0.75;
+  animation-duration: 2s;
+}
+.orb-wrap.is-listening .orb::before {
+  opacity: 1;
+  animation-duration: 1s;
+}
+
+@keyframes orb-spin {
+  to { transform: rotate(360deg); }
+}

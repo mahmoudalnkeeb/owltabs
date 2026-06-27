@@ -1,0 +1,119 @@
+/* ============================================================
+   Vesper Agentic — Design Tokens (dark theme is default)
+   Color source: Vesper VS Code theme by Rauno Freiberg
+   https://github.com/raunofreiberg/vesper
+   ============================================================ */
+
+:root {
+  /* ---------- Surfaces ---------- */
+  --surface-0: #101010;        /* page canvas */
+  --surface-1: #161616;        /* cards, raised panels, active tabs */
+  --surface-2: #1c1c1c;        /* inputs, recessed wells, tool icons */
+  --surface-3: #202020;        /* modal/overlay base */
+  --surface-selected: #232323; /* active list/menu selection */
+  --surface-hover: #282828;    /* hover state */
+  --scrollbar: #343434;
+  --scrollbar-soft: #34343480;
+
+  /* ---------- Borders ---------- */
+  --border-subtle: #1d1d1d;
+  --border-default: #282828;
+  --border-strong: #343434;
+
+  /* ---------- Text ---------- */
+  --text-primary: #ffffff;     /* 19.0:1 on surface-0 */
+  --text-secondary: #a0a0a0;   /* 7.3:1 on surface-0 */
+  --text-tertiary: #7e7e7e;    /* 4.7:1 on surface-0 — labels/captions only */
+  --text-disabled: #505050;
+  --text-on-accent: #000000;   /* 13.9:1 on accent */
+
+  /* ---------- Accent / agent / write-tier (peppermint orange) ---------- */
+  --accent: #ffc799;           /* 12.6:1 on surface-0 */
+  --accent-hover: #ffcfa8;
+  --accent-soft: #ffc79926;    /* 15% */
+  --accent-softer: #ffc79914;  /* 8%  */
+
+  /* ---------- Positive / read-tier (peppermint mint) ---------- */
+  --mint: #99ffe4;             /* 16.1:1 on surface-0 */
+  --mint-soft: #99ffe426;
+  --mint-softer: #99ffe415;
+
+  /* ---------- Negative / destructive ---------- */
+  --red: #ff8080;              /* 7.8:1 on surface-0 */
+  --red-soft: #ff808026;
+  --red-softer: #ff808015;
+
+  --selection: #ffffff25;
+  --focus-ring: #ffc799;
+
+  /* ---------- Radius ---------- */
+  --r-xs: 4px;
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 20px;
+  --r-full: 999px;
+
+  /* ---------- Space (4px base grid) ---------- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+  --sp-20: 80px;
+
+  /* ---------- Motion ---------- */
+  --ease-standard: cubic-bezier(.4, 0, .2, 1);
+  --ease-out: cubic-bezier(0, 0, .2, 1);
+  --ease-in: cubic-bezier(.4, 0, 1, 1);
+  --ease-breath: cubic-bezier(.45, 0, .55, 1);
+  --dur-instant: 80ms;
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 320ms;
+  --dur-deliberate: 480ms;
+
+  /* ---------- Typography ---------- */
+  --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  --text-display: 600 56px/1.08 var(--font-sans);
+  --text-h1: 600 36px/1.15 var(--font-sans);
+  --text-h2: 600 26px/1.25 var(--font-sans);
+  --text-h3: 600 19px/1.3 var(--font-sans);
+  --text-body-lg: 400 17px/1.6 var(--font-sans);
+  --text-body: 400 15px/1.6 var(--font-sans);
+  --text-body-sm: 400 13px/1.55 var(--font-sans);
+  --text-caption: 500 11px/1.4 var(--font-mono);
+  --text-code: 400 13px/1.7 var(--font-mono);
+
+  /* ---------- Z-index scale ---------- */
+  --z-base: 1;
+  --z-topbar: 10;
+  --z-omnibox: 20;
+  --z-drawer: 30;
+  --z-permission: 40;
+  --z-toast: 50;
+}
+
+/* ---------- Base resets that lean on the tokens ---------- */
+body {
+  background: var(--surface-0);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+}
+::selection { background: var(--selection); }
+:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+}

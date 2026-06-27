@@ -1,0 +1,697 @@
+<!doctype html>
+
+<html class="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Vesper | New Tab</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-tertiary-fixed": "#001f28",
+              "inverse-surface": "#ebe1db",
+              tertiary: "#d6f3ff",
+              "on-secondary-fixed": "#002116",
+              background: "#171310",
+              "on-secondary-fixed-variant": "#00513b",
+              "tertiary-container": "#aad9ec",
+              "surface-container": "#231f1b",
+              "primary-container": "#ffc799",
+              "surface-bright": "#3e3834",
+              "secondary-fixed": "#8ff6cd",
+              "on-primary": "#492807",
+              "on-primary-container": "#7a512c",
+              "error-container": "#93000a",
+              "on-background": "#ebe1db",
+              "on-primary-fixed-variant": "#643e1b",
+              primary: "#ffebdd",
+              "primary-fixed-dim": "#f2bc8e",
+              "surface-container-lowest": "#110d0b",
+              "on-secondary-container": "#e3fff0",
+              "on-surface": "#ebe1db",
+              "on-error": "#690005",
+              "on-secondary": "#003828",
+              "secondary-fixed-dim": "#73d9b2",
+              "tertiary-fixed-dim": "#9fcee0",
+              "surface-container-low": "#1f1b18",
+              error: "#ffb4ab",
+              "on-surface-variant": "#d5c3b7",
+              "surface-container-highest": "#393430",
+              "surface-variant": "#393430",
+              outline: "#9d8e83",
+              "surface-tint": "#f2bc8e",
+              "secondary-container": "#008260",
+              "on-tertiary-fixed-variant": "#1b4c5c",
+              "on-primary-fixed": "#2e1500",
+              "inverse-primary": "#7f5530",
+              "surface-dim": "#171310",
+              "surface-container-high": "#2e2926",
+              "on-error-container": "#ffdad6",
+              "on-tertiary": "#003543",
+              "outline-variant": "#50453c",
+              "on-tertiary-container": "#316070",
+              "inverse-on-surface": "#352f2c",
+              "tertiary-fixed": "#baeafd",
+              secondary: "#73d9b2",
+              "primary-fixed": "#ffdcc1",
+              surface: "#171310",
+            },
+            borderRadius: {
+              DEFAULT: "0.25rem",
+              lg: "0.5rem",
+              xl: "0.75rem",
+              full: "9999px",
+            },
+            spacing: {
+              sm: "8px",
+              md: "16px",
+              xl: "48px",
+              xs: "4px",
+              lg: "24px",
+            },
+            fontFamily: {
+              "body-sm": ["Inter"],
+              h3: ["Inter"],
+              caption: ["JetBrains Mono"],
+              h2: ["Inter"],
+              body: ["Inter"],
+            },
+            fontSize: {
+              "body-sm": [
+                "13px",
+                { lineHeight: "18px", letterSpacing: "0", fontWeight: "400" },
+              ],
+              h3: [
+                "19px",
+                {
+                  lineHeight: "24px",
+                  letterSpacing: "-0.01em",
+                  fontWeight: "500",
+                },
+              ],
+              caption: [
+                "11px",
+                {
+                  lineHeight: "14px",
+                  letterSpacing: "0.05em",
+                  fontWeight: "400",
+                },
+              ],
+              h2: [
+                "26px",
+                {
+                  lineHeight: "32px",
+                  letterSpacing: "-0.02em",
+                  fontWeight: "600",
+                },
+              ],
+              body: [
+                "15px",
+                { lineHeight: "22px", letterSpacing: "0", fontWeight: "400" },
+              ],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      body {
+        background-color: #171310;
+        background-image:
+          radial-gradient(
+            circle at 0% 0%,
+            rgba(255, 199, 153, 0.05) 0%,
+            transparent 40%
+          ),
+          radial-gradient(
+            circle at 100% 0%,
+            rgba(143, 246, 205, 0.03) 0%,
+            transparent 35%
+          );
+        min-height: 100vh;
+        color: #ebe1db;
+        overflow-x: hidden;
+      }
+
+      .surface-1 {
+        background-color: #1f1b18;
+        border: 1px solid #262626;
+      }
+
+      .surface-2 {
+        background-color: #2e2926;
+      }
+
+      .omnibox-glow:focus-within {
+        box-shadow: 0 0 20px rgba(255, 199, 153, 0.1);
+        border-color: #ffc799;
+      }
+
+      .fade-up {
+        animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      @keyframes fadeUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .delay-1 {
+        animation-delay: 100ms;
+      }
+      .delay-2 {
+        animation-delay: 200ms;
+      }
+      .delay-3 {
+        animation-delay: 300ms;
+      }
+
+      .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .hide-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+
+      .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 300,
+          "GRAD" 0,
+          "opsz" 20;
+        vertical-align: middle;
+      }
+    </style>
+  </head>
+  <body
+    class="font-body selection:bg-primary-container selection:text-on-primary-container"
+  >
+    <!-- TopNavBar -->
+    <header
+      class="fixed top-0 w-full h-[52px] bg-background flex justify-between items-center px-lg z-40 transition-all duration-200 ease-out"
+    >
+      <div class="flex items-center gap-md">
+        <span
+          class="font-caption text-body-sm text-on-surface-variant tracking-wider uppercase"
+          >14:32</span
+        >
+        <span class="w-[1px] h-3 bg-outline-variant"></span>
+        <span class="font-caption text-body-sm text-on-surface-variant"
+          >Fri, 24 Oct</span
+        >
+      </div>
+      <div class="flex items-center gap-md">
+        <button
+          class="text-on-background hover:opacity-80 transition-opacity p-xs"
+          onclick="toggleSideNav('ai')"
+        >
+          <span
+            class="material-symbols-outlined"
+            style="font-variation-settings: &quot;FILL&quot; 1"
+            >smart_toy</span
+          >
+        </button>
+        <button
+          class="text-on-background hover:opacity-80 transition-opacity p-xs"
+          onclick="toggleSideNav('settings')"
+        >
+          <span class="material-symbols-outlined">settings</span>
+        </button>
+      </div>
+    </header>
+    <!-- Main Content Wrapper -->
+    <main class="pt-[64px] pb-xl flex flex-col items-center">
+      <!-- Hero Section -->
+      <section
+        class="w-full max-w-[1040px] px-md flex flex-col items-center mt-xl mb-xl fade-up delay-1"
+      >
+        <!-- Omnibox -->
+        <div class="relative w-full max-w-[620px] group">
+          <div
+            class="surface-1 omnibox-glow rounded-xl transition-all duration-300 p-sm"
+            id="omnibox"
+          >
+            <div class="flex items-center px-md gap-md h-12">
+              <span class="material-symbols-outlined text-outline">search</span>
+              <input
+                class="bg-transparent border-none focus:ring-0 w-full font-body text-on-surface placeholder:text-on-surface-variant/50"
+                onblur="collapseOmnibox()"
+                onfocus="expandOmnibox()"
+                placeholder="Search or type a command..."
+                type="text"
+              />
+              <div
+                class="font-caption text-[10px] border border-outline-variant rounded px-1.5 py-0.5 text-on-surface-variant flex items-center gap-1 opacity-60"
+              >
+                <span>⌘</span><span>K</span>
+              </div>
+            </div>
+            <!-- Expandable Modes -->
+            <div
+              class="hidden overflow-hidden transition-all duration-200 px-md pb-sm pt-xs border-t border-outline-variant mt-sm"
+              id="omnibox-modes"
+            >
+              <div class="flex gap-md">
+                <button
+                  class="font-caption text-[11px] text-primary py-1 border-b border-primary"
+                >
+                  WEB
+                </button>
+                <button
+                  class="font-caption text-[11px] text-on-surface-variant py-1 hover:text-on-surface transition-colors"
+                >
+                  FEED
+                </button>
+                <button
+                  class="font-caption text-[11px] text-on-surface-variant py-1 hover:text-on-surface transition-colors"
+                >
+                  BOOKMARKS
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Quick Links -->
+        <div
+          class="grid grid-cols-4 md:grid-cols-6 gap-xl mt-[48px] fade-up delay-2"
+        >
+          <div class="flex flex-col items-center group cursor-pointer">
+            <div
+              class="w-12 h-12 rounded-full surface-1 flex items-center justify-center mb-sm group-hover:bg-surface-container-high transition-colors"
+            >
+              <img
+                class="w-6 h-6 opacity-80 group-hover:opacity-100 transition-opacity"
+                data-alt="Official GitHub brand icon in a minimalist circular vector style with clean white lines on a dark obsidian background, high contrast technical aesthetic."
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDaoWKT3TPe4h_8GK2jWBZevCm9ZBmV6ONckLMk0c2QDJRtTWU43TDlcRdfW9x9ZhpfDo-5XpybUVaX-MIUdtrpLfYuO6y7SbjPW9pcOgqXM5XOEGFNjvrht0mS0ROSOr7XQ39R3oDXarwcIU7mGETyT1g11gE40PjhCnaTVmktKsvNUEpAzhDZXOaj0YzP56gFt5HuPFTmKlKVnRMXNFQvh0A0r7MjKNCpb-iJyvlg56LBEIv4AMEI"
+              />
+            </div>
+            <span class="font-caption text-body-sm text-on-surface-variant"
+              >GitHub</span
+            >
+          </div>
+          <div class="flex flex-col items-center group cursor-pointer">
+            <div
+              class="w-12 h-12 rounded-full surface-1 flex items-center justify-center mb-sm group-hover:bg-surface-container-high transition-colors"
+            >
+              <img
+                class="w-5 h-5 opacity-80 group-hover:opacity-100 transition-opacity"
+                data-alt="Official Gmail envelope icon in a minimalist flat design, featuring subtle muted tones that blend into a dark mode interface, sharp edges and professional clarity."
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCmH4VuXn3BDpBKaxG06AUQoSg4byAf2lI04QoWYSn_dY2pVdNKvAuvh99BSURA6fxv2_Z0ped99bxZJG8Q10n5vXV_q_hLnXWpH1ZokHduTsQwcvcuXZ0lpU0F1jt4GrhtQYP-CTdpij28eMachJuI9wjSVy794wGPAw8XdAaDRRMDyUmWGdpbbmf9wli9k7mWQC0mOylp7jURLhP6LxK6JqBYz4T3hznjIhTu0HpNy1nj2Qu-fM_q"
+              />
+            </div>
+            <span class="font-caption text-body-sm text-on-surface-variant"
+              >Gmail</span
+            >
+          </div>
+          <div class="flex flex-col items-center group cursor-pointer">
+            <div
+              class="w-12 h-12 rounded-full surface-1 flex items-center justify-center mb-sm group-hover:bg-surface-container-high transition-colors"
+            >
+              <img
+                class="w-5 h-5 opacity-80 group-hover:opacity-100 transition-opacity"
+                data-alt="A clean minimalist calendar icon representing Google Calendar, simple geometric shapes with a focus on organization and time management, aesthetic tech dark theme."
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBH_40O-1AGPV-0x4Rvsw-izo9OB_RPu0bKyiHv69Sy6K_r2FM2xYebbaZH2YvOt7KCIUFw0WhPpFK4CKZNkX7Xy36fvXMMoSk4TSmEpw9Xqdan9k-AsBVS73N8Lkj6VehC6mg8np2FpqRAGsWppPnUa0X4pTLudzWJOnOYXqDDJeQq4aQJYGRHldqAMW-Mdl-WqVsj19S2IUKAWfwCIKk7pHxYaOux1iFYNlW0QI1xVP9-CEu1iCWT"
+              />
+            </div>
+            <span class="font-caption text-body-sm text-on-surface-variant"
+              >Calendar</span
+            >
+          </div>
+          <div class="flex flex-col items-center group cursor-pointer">
+            <div
+              class="w-12 h-12 rounded-full surface-1 flex items-center justify-center mb-sm border-dashed border-2 border-outline-variant group-hover:border-primary transition-colors"
+            >
+              <span
+                class="material-symbols-outlined text-outline group-hover:text-primary"
+                >add</span
+              >
+            </div>
+            <span class="font-caption text-body-sm text-on-surface-variant"
+              >Add</span
+            >
+          </div>
+        </div>
+      </section>
+      <!-- Feed Section -->
+      <section class="w-full max-w-[1040px] px-md mt-lg fade-up delay-3">
+        <!-- Filter Bar -->
+        <div
+          class="flex items-center gap-sm mb-lg overflow-x-auto hide-scrollbar"
+        >
+          <button
+            class="px-md py-1.5 rounded-full bg-primary-container text-on-primary-container font-body-sm"
+          >
+            All
+          </button>
+          <button
+            class="px-md py-1.5 rounded-full surface-1 hover:bg-surface-2 transition-colors font-body-sm text-on-surface-variant"
+          >
+            Tech
+          </button>
+          <button
+            class="px-md py-1.5 rounded-full surface-1 hover:bg-surface-2 transition-colors font-body-sm text-on-surface-variant"
+          >
+            Design
+          </button>
+          <button
+            class="px-md py-1.5 rounded-full surface-1 hover:bg-surface-2 transition-colors font-body-sm text-on-surface-variant"
+          >
+            Saved
+          </button>
+        </div>
+        <!-- Bento/Grid Feed -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-lg">
+          <!-- Card 1 -->
+          <article
+            class="surface-1 rounded-xl overflow-hidden group hover:border-outline transition-all duration-200"
+          >
+            <div class="aspect-video relative overflow-hidden">
+              <div
+                class="w-full h-full bg-cover bg-center group-hover:scale-105 transition-transform duration-500"
+                data-alt="A futuristic workspace featuring multiple vertical monitors displaying clean code and data visualizations. The lighting is low and moody with a warm orange glow from a desk lamp, reflecting the Obsidian Tech design aesthetic."
+                style="
+                  background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuDe319IYF-lVY2Wq6uIX5i4eBB8FAX8Lo7SlIozA_3BtrDcW8-QZp-XXK8PoOGeuPiR1T6OzeRg5g9uzw-KoPRI3z1eFY5laO3TRMzsVo3iv-n6m4iN_j567py2r8jV1wfIHsTc4n5BGo9okK6yYp9MLxSYFvM5XU1b9QjTuoQ_koN6Plun8Wcbc43p4zyYBKQrZlqCGGZ2MbEy90sCA0uFQTESUDk7xbcVvAWv4fQds85dY1hQwz0z&quot;);
+                "
+              ></div>
+              <div
+                class="absolute top-2 left-2 px-2 py-0.5 surface-1/80 backdrop-blur-sm rounded-md flex items-center gap-1"
+              >
+                <span class="material-symbols-outlined text-[14px]">bolt</span>
+                <span class="font-caption text-[10px]">VERGE</span>
+              </div>
+            </div>
+            <div class="p-md">
+              <h4 class="font-h3 text-h3 text-on-surface mb-xs leading-snug">
+                The Future of Local LLMs
+              </h4>
+              <p
+                class="font-body-sm text-on-surface-variant line-clamp-2 mb-md"
+              >
+                Advancements in Apple Silicon and open-source models are making
+                local inference a reality for developers...
+              </p>
+              <div
+                class="flex items-center justify-between border-t border-outline-variant pt-md"
+              >
+                <div class="flex items-center gap-xs">
+                  <button
+                    class="p-1.5 rounded-lg surface-2 hover:text-primary transition-colors"
+                  >
+                    <span class="material-symbols-outlined text-[18px]"
+                      >open_in_new</span
+                    >
+                  </button>
+                  <button
+                    class="p-1.5 rounded-lg surface-2 hover:text-primary transition-colors"
+                  >
+                    <span class="material-symbols-outlined text-[18px]"
+                      >bookmark</span
+                    >
+                  </button>
+                </div>
+                <button
+                  class="px-3 py-1.5 rounded-lg bg-surface-container-high text-primary flex items-center gap-2 hover:brightness-110 transition-all"
+                >
+                  <span
+                    class="material-symbols-outlined text-[16px]"
+                    style="font-variation-settings: &quot;FILL&quot; 1"
+                    >auto_awesome</span
+                  >
+                  <span class="font-caption text-[11px]">ASK AI</span>
+                </button>
+              </div>
+            </div>
+          </article>
+          <!-- Card 2 -->
+          <article
+            class="surface-1 rounded-xl overflow-hidden group hover:border-outline transition-all duration-200"
+          >
+            <div class="aspect-video relative overflow-hidden">
+              <div
+                class="w-full h-full bg-cover bg-center group-hover:scale-105 transition-transform duration-500"
+                data-alt="A high-end architectural rendering of a brutalist concrete structure at dusk, illuminated by subtle recessed lighting. Minimalist landscaping and a deep starry sky set a serene, focused atmosphere consistent with dark mode UI guidelines."
+                style="
+                  background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuCdcJdflab248CNBXetwR68b6vEO5Bw0fvBCJVrf7Um3RtQnuOSNMZN8Sir9GE-tXGX4ePAWQJDlLl1grL5pjYtco16sztGePRxuKzLHYsTbqTZ-QZfSmQSnAyDrdTjm5f8jMR5_EjlJ3FM24CfDWjccRM9S0ds2iKVJnHyFSz2jf_6-a02Rbc0FHwuBqkhO2O9zJRaPa8w0GcvhHH6TFLuchz9XEHVSlu5oi8stam8BZipkrADVYd6&quot;);
+                "
+              ></div>
+              <div
+                class="absolute top-2 left-2 px-2 py-0.5 surface-1/80 backdrop-blur-sm rounded-md flex items-center gap-1"
+              >
+                <span class="material-symbols-outlined text-[14px]">brush</span>
+                <span class="font-caption text-[10px]">DEZZEEN</span>
+              </div>
+            </div>
+            <div class="p-md">
+              <h4 class="font-h3 text-h3 text-on-surface mb-xs leading-snug">
+                Obsidian Minimalism in UI
+              </h4>
+              <p
+                class="font-body-sm text-on-surface-variant line-clamp-2 mb-md"
+              >
+                Why high-contrast, dark interfaces are becoming the standard for
+                productivity power users worldwide...
+              </p>
+              <div
+                class="flex items-center justify-between border-t border-outline-variant pt-md"
+              >
+                <div class="flex items-center gap-xs">
+                  <button
+                    class="p-1.5 rounded-lg surface-2 hover:text-primary transition-colors"
+                  >
+                    <span class="material-symbols-outlined text-[18px]"
+                      >open_in_new</span
+                    >
+                  </button>
+                  <button
+                    class="p-1.5 rounded-lg surface-2 hover:text-primary transition-colors"
+                  >
+                    <span class="material-symbols-outlined text-[18px]"
+                      >bookmark</span
+                    >
+                  </button>
+                </div>
+                <button
+                  class="px-3 py-1.5 rounded-lg bg-surface-container-high text-primary flex items-center gap-2 hover:brightness-110 transition-all"
+                >
+                  <span
+                    class="material-symbols-outlined text-[16px]"
+                    style="font-variation-settings: &quot;FILL&quot; 1"
+                    >auto_awesome</span
+                  >
+                  <span class="font-caption text-[11px]">ASK AI</span>
+                </button>
+              </div>
+            </div>
+          </article>
+          <!-- Card 3 -->
+          <article
+            class="surface-1 rounded-xl overflow-hidden group hover:border-outline transition-all duration-200"
+          >
+            <div class="aspect-video relative overflow-hidden">
+              <div
+                class="w-full h-full bg-cover bg-center group-hover:scale-105 transition-transform duration-500"
+                data-alt="An abstract macro shot of iridescent silicon wafers and microchip circuits, glowing with neon mint and copper tones. The image represents cutting-edge hardware and precision engineering with a sleek tech aesthetic."
+                style="
+                  background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuB6Q5xQJF3auEVlKcbyJkTo0YHUNyH6-mIqFqZQARfvGwPlyOvn8gBnOAxLA5VR2nfNfDU0tt0BR8ZhNQBUXCmISKgpcNCkRp9fPLCbYPHxSmH6S50_gS0ARiiqXvRonIcWhaWkFlWHOuDo1BgGgixmtYiRsUUygnstgJ8X0rWT8j8QcHTXsR9TsrVxjSk_FaP-GGn-ptUdrtHEUysvNIV-JSKd9tO5cQWoLQ_QbSLEeLNTvFef_Eyw&quot;);
+                "
+              ></div>
+              <div
+                class="absolute top-2 left-2 px-2 py-0.5 surface-1/80 backdrop-blur-sm rounded-md flex items-center gap-1"
+              >
+                <span class="material-symbols-outlined text-[14px]"
+                  >monitoring</span
+                >
+                <span class="font-caption text-[10px]">HACKER NEWS</span>
+              </div>
+            </div>
+            <div class="p-md">
+              <h4 class="font-h3 text-h3 text-on-surface mb-xs leading-snug">
+                Rust vs C++: 2024 Report
+              </h4>
+              <p
+                class="font-body-sm text-on-surface-variant line-clamp-2 mb-md"
+              >
+                Memory safety remains the top priority for mission-critical
+                systems as Rust gains massive adoption in the kernel...
+              </p>
+              <div
+                class="flex items-center justify-between border-t border-outline-variant pt-md"
+              >
+                <div class="flex items-center gap-xs">
+                  <button
+                    class="p-1.5 rounded-lg surface-2 hover:text-primary transition-colors"
+                  >
+                    <span class="material-symbols-outlined text-[18px]"
+                      >open_in_new</span
+                    >
+                  </button>
+                  <button
+                    class="p-1.5 rounded-lg surface-2 hover:text-primary transition-colors"
+                  >
+                    <span class="material-symbols-outlined text-[18px]"
+                      >bookmark</span
+                    >
+                  </button>
+                </div>
+                <button
+                  class="px-3 py-1.5 rounded-lg bg-surface-container-high text-primary flex items-center gap-2 hover:brightness-110 transition-all"
+                >
+                  <span
+                    class="material-symbols-outlined text-[16px]"
+                    style="font-variation-settings: &quot;FILL&quot; 1"
+                    >auto_awesome</span
+                  >
+                  <span class="font-caption text-[11px]">ASK AI</span>
+                </button>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+    <!-- SideNavBar (Settings/AI Drawer) -->
+    <aside
+      class="fixed right-0 top-0 h-full w-full md:w-[400px] z-50 bg-surface-container border-l border-outline-variant shadow-xl transition-transform duration-300 translate-x-full"
+      id="side-drawer"
+    >
+      <div class="flex flex-col h-full py-lg px-md">
+        <div class="flex items-center justify-between mb-xl">
+          <div>
+            <h2 class="font-h2 text-h2 text-on-surface" id="drawer-title">
+              Settings
+            </h2>
+            <p
+              class="font-body text-body text-on-surface-variant"
+              id="drawer-subtitle"
+            >
+              Manage your workspace
+            </p>
+          </div>
+          <button
+            class="p-xs hover:bg-surface-container-high rounded-full"
+            onclick="closeSideNav()"
+          >
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <!-- Navigation Links (Contextual) -->
+        <nav class="space-y-sm flex-grow" id="settings-nav">
+          <button
+            class="w-full flex items-center gap-md p-md rounded-lg text-primary border-r-2 border-primary bg-surface-container-high"
+          >
+            <span class="material-symbols-outlined">settings</span>
+            <span class="font-body">General</span>
+          </button>
+          <button
+            class="w-full flex items-center gap-md p-md rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors"
+          >
+            <span class="material-symbols-outlined">palette</span>
+            <span class="font-body">Appearance</span>
+          </button>
+          <button
+            class="w-full flex items-center gap-md p-md rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors"
+          >
+            <span class="material-symbols-outlined">search</span>
+            <span class="font-body">Search Engines</span>
+          </button>
+          <button
+            class="w-full flex items-center gap-md p-md rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors"
+          >
+            <span class="material-symbols-outlined">lock</span>
+            <span class="font-body">Privacy &amp; Security</span>
+          </button>
+        </nav>
+        <div class="mt-auto border-t border-outline-variant pt-lg">
+          <button
+            class="w-full py-md rounded-xl bg-primary-container text-on-primary-container font-h3 hover:opacity-90 transition-opacity"
+          >
+            Upgrade to Pro
+          </button>
+        </div>
+      </div>
+    </aside>
+    <!-- Overlay -->
+    <div
+      class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 hidden opacity-0 transition-opacity duration-300"
+      id="overlay"
+      onclick="closeSideNav()"
+    ></div>
+    <script>
+      const drawer = document.getElementById("side-drawer");
+      const overlay = document.getElementById("overlay");
+      const omniboxModes = document.getElementById("omnibox-modes");
+      const omnibox = document.getElementById("omnibox");
+
+      function toggleSideNav(type) {
+        const title = document.getElementById("drawer-title");
+        const subtitle = document.getElementById("drawer-subtitle");
+
+        if (type === "ai") {
+          title.innerText = "Vesper AI";
+          subtitle.innerText = "Your workspace companion";
+          // You could swap nav content here
+        } else {
+          title.innerText = "Settings";
+          subtitle.innerText = "Manage your workspace";
+        }
+
+        drawer.classList.remove("translate-x-full");
+        overlay.classList.remove("hidden");
+        setTimeout(() => overlay.classList.add("opacity-100"), 10);
+      }
+
+      function closeSideNav() {
+        drawer.classList.add("translate-x-full");
+        overlay.classList.remove("opacity-100");
+        setTimeout(() => overlay.classList.add("hidden"), 300);
+      }
+
+      function expandOmnibox() {
+        omniboxModes.classList.remove("hidden");
+        omnibox.classList.add("shadow-2xl");
+      }
+
+      function collapseOmnibox() {
+        // Delay to allow clicking mode buttons
+        setTimeout(() => {
+          omniboxModes.classList.add("hidden");
+          omnibox.classList.remove("shadow-2xl");
+        }, 200);
+      }
+
+      // Global hotkey logic
+      document.addEventListener("keydown", (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+          e.preventDefault();
+          const input = omnibox.querySelector("input");
+          input.focus();
+        }
+        if (e.key === "Escape") {
+          closeSideNav();
+          omnibox.querySelector("input").blur();
+        }
+      });
+    </script>
+  </body>
+</html>
