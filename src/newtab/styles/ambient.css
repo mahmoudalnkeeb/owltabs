@@ -1,0 +1,131 @@
+/* ============================================================
+   ambient.css — Vesper Agentic ambient background
+   Drop after design-tokens.css.
+   ============================================================ */
+
+/* ─── 1. Registered (animatable) custom properties ─────── */
+
+@property --amb-x {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 20%;
+}
+
+@property --amb-y {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 50%;
+}
+
+@property --amb-warm {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: #1a1208;
+}
+
+@property --amb-mid {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: #0d0d0d;
+}
+
+/* ─── 2. Keyframes ────────────────────────────────────── */
+
+@keyframes ambientShift {
+  0% {
+    --amb-x:    20%;
+    --amb-y:    50%;
+    --amb-warm: #1a1208;
+    --amb-mid:  #0e0e0e;
+  }
+  25% {
+    --amb-x:    72%;
+    --amb-y:    22%;
+    --amb-warm: #101510;
+    --amb-mid:  #0b0c0b;
+  }
+  50% {
+    --amb-x:    50%;
+    --amb-y:    78%;
+    --amb-warm: #0c0f14;
+    --amb-mid:  #0d0d0f;
+  }
+  75% {
+    --amb-x:    8%;
+    --amb-y:    32%;
+    --amb-warm: #160e07;
+    --amb-mid:  #0f0e0d;
+  }
+  100% {
+    --amb-x:    20%;
+    --amb-y:    50%;
+    --amb-warm: #1a1208;
+    --amb-mid:  #0e0e0e;
+  }
+}
+
+/* ─── 3. Ambient gradient layer ───────────────────────── */
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  will-change: background;
+
+  background: radial-gradient(
+    ellipse at var(--amb-x) var(--amb-y),
+    var(--amb-warm)   0%,
+    var(--amb-mid)   58%,
+    #0a0a0a          100%
+  );
+
+  animation:
+    ambientShift
+    12s
+    var(--ease-breath)
+    infinite
+    alternate;
+}
+
+/* ─── 4. Vignette layer ──────────────────────────────── */
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+
+  background:
+    radial-gradient(
+      ellipse 140% 120% at 50% 50%,
+      transparent          40%,
+      rgba(0, 0, 0, 0.45) 100%
+    ),
+    radial-gradient(
+      ellipse 60% 50% at 50% 44%,
+      rgba(255, 199, 153, 0.025) 0%,
+      transparent                    70%
+    );
+}
+
+/* ─── 5. Reduced-motion override ─────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  body::before {
+    animation: none;
+    --amb-x:    20%;
+    --amb-y:    50%;
+    --amb-warm: #1a1208;
+    --amb-mid:  #0d0d0d;
+
+    background: radial-gradient(
+      ellipse at var(--amb-x) var(--amb-y),
+      var(--amb-warm)  0%,
+      var(--amb-mid)  58%,
+      #0a0a0a         100%
+    );
+  }
+}

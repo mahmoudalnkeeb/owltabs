@@ -18,6 +18,7 @@ import {
 
 import "./styles/tokens.css";
 import "./styles/newtab-tokens.css";
+import "./styles/ambient.css";
 import "./styles/layout.css";
 import "./styles/components/topbar.css";
 import "./styles/components/omnibox.css";

@@ -48,6 +48,4 @@
   --backdrop: rgba(0, 0, 0, 0.6);
   --backdrop-blur: blur(4px);
 
-  /* ---------- Page background — static base (animated via ambientShift) */
-  --nt-bg: var(--surface-0);
 }
