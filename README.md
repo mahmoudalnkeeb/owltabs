@@ -1,5 +1,9 @@
 # OwlTabs
 
+<p align="center">
+  <img src="assets/owltabs-portrait.png" alt="OwlTabs screenshot" width="600">
+</p>
+
 A focused new-tab page for software engineers. RSS feeds, quick links, and an built-in AI assistant — all in a dark, minimal interface.
 
 ## Features

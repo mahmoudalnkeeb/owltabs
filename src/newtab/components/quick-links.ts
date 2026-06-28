@@ -5,6 +5,8 @@ import { $, escapeHtml, svgIcon, showToast } from "../utils";
 import Sortable from "sortablejs";
 
 let popover: HTMLDivElement | null = null;
+let sortableInstance: Sortable | null = null;
+let abortController: AbortController | null = null;
 
 export async function renderQuickLinks(settings: SyncStorageSettings) {
   const container = $("#nt-quicklinks");
@@ -14,6 +16,13 @@ export async function renderQuickLinks(settings: SyncStorageSettings) {
     container.innerHTML = "";
     return;
   }
+
+  // Destroy previous Sortable and event listeners before re-render
+  sortableInstance?.destroy();
+  sortableInstance = null;
+  abortController?.abort();
+  abortController = new AbortController();
+  const signal = abortController.signal;
 
   const links = settings.quickLinks;
   const domains = links.map((l) => getDomain(l.url)).filter(Boolean);
@@ -45,7 +54,7 @@ export async function renderQuickLinks(settings: SyncStorageSettings) {
   `;
 
   // SortableJS reorder
-  Sortable.create(container as HTMLElement, {
+  sortableInstance = Sortable.create(container as HTMLElement, {
     draggable: ".ql-tile:not(.ql-add)",
     animation: 150,
     onEnd: async () => {
@@ -66,7 +75,7 @@ export async function renderQuickLinks(settings: SyncStorageSettings) {
     await storage.saveSettings({ quickLinks: updated });
     renderQuickLinks({ ...settings, quickLinks: updated });
     showToast("Link removed", "accent");
-  });
+  }, { signal });
 
   // Click to open
   container.addEventListener("click", (e) => {
@@ -75,12 +84,12 @@ export async function renderQuickLinks(settings: SyncStorageSettings) {
     e.preventDefault();
     const url = tile.href;
     window.open(url, settings.openLinksIn === "new_tab" ? "_blank" : "_self");
-  });
+  }, { signal });
 
   // Add button
   $("#nt-ql-add")?.addEventListener("click", () => {
     showAddPopover(settings);
-  });
+  }, { signal });
 }
 
 function showAddPopover(settings: SyncStorageSettings) {
