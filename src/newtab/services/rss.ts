@@ -567,7 +567,7 @@ async function parseWithStrategy(
         format === "rss"
           ? parseRSSWithProfile(xml, feedConfig, profile)
           : parseAtomWithProfile(xml, feedConfig, profile);
-      return items.slice(0, 20);
+      return items.slice(0, feedConfig.maxArticles ?? 20);
     }
   }
 
@@ -585,12 +585,12 @@ async function parseWithStrategy(
   if (trialScore < 3) {
     const best = tryAllProfiles(xml, feedConfig, format);
     await setCachedStrategy(feedConfig.id, best.profile.name);
-    return best.items.slice(0, 20);
+    return best.items.slice(0, feedConfig.maxArticles ?? 20);
   }
 
   // Detected profile is good enough
   await setCachedStrategy(feedConfig.id, detected.name);
-  return trialItems.slice(0, 20);
+  return trialItems.slice(0, feedConfig.maxArticles ?? 20);
 }
 
 // ------------------------------------------------------------------
@@ -630,7 +630,7 @@ export async function fetchFeed(
   const text = await res.text();
   const xml = new DOMParser().parseFromString(text, "text/xml");
   const items = await parseWithStrategy(xml, feedConfig);
-  return items.slice(0, 20);
+  return items.slice(0, feedConfig.maxArticles ?? 20);
 }
 
 export async function parseStoredFeeds(

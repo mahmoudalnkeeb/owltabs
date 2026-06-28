@@ -5,6 +5,7 @@ export interface FeedConfig {
   category: string;
   enabled: boolean;
   refreshIntervalMins: 30 | 60 | 120 | 0;
+  maxArticles?: number;
 }
 
 export interface QuickLink {

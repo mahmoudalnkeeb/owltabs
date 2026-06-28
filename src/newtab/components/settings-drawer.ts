@@ -494,6 +494,10 @@ function renderFeedsCustom(): string {
             <div class="settings-row-label">${escapeHtml(f.label)}</div>
             <div class="settings-row-hint">${escapeHtml(f.url)} · ${escapeHtml(f.category)}</div>
           </div>
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-tertiary);white-space:nowrap">
+            Max
+            <input type="number" class="field" data-action="max-articles" data-id="${escapeHtml(f.id)}" value="${f.maxArticles ?? 20}" min="1" max="200" style="width:56px;padding:2px 6px;font-size:12px" />
+          </label>
           <button class="mini-btn danger" data-action="remove-feed" data-id="${escapeHtml(f.id)}">
             ${svgIcon("trash", 14)}
           </button>
@@ -563,6 +567,7 @@ function initFeedsCustom() {
                 category,
                 enabled: true,
                 refreshIntervalMins: 60,
+                maxArticles: 32,
               });
             });
           });
@@ -584,6 +589,7 @@ function initFeedsCustom() {
       category,
       enabled: true,
       refreshIntervalMins: 60,
+      maxArticles: 32,
     });
   });
 
@@ -598,6 +604,23 @@ function initFeedsCustom() {
         navigateToMain();
         showToast("Feed removed", "accent");
       });
+    });
+
+  document
+    .querySelectorAll<HTMLInputElement>("[data-action='max-articles']")
+    .forEach((input) => {
+      const onchange = async () => {
+        const id = input.dataset.id!;
+        const n = parseInt(input.value, 10);
+        const value = Math.max(1, Math.min(200, isNaN(n) ? 20 : n));
+        input.value = String(value);
+        const updated = currentSettings.feedsConfig.map((f) =>
+          f.id === id ? { ...f, maxArticles: value } : f,
+        );
+        await storage.saveSettings({ feedsConfig: updated });
+        currentSettings = await storage.getSettings();
+      };
+      input.addEventListener("change", onchange);
     });
 }
 
