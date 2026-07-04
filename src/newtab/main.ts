@@ -118,13 +118,6 @@ async function init() {
           uiStore.set((s) => ({ ...s, settingsOpen: false }));
           return;
         }
-        const feedSearch = document.getElementById("nt-feed-search-input") as HTMLInputElement | null;
-        if (feedSearch && !feedSearch.hidden) {
-          feedSearch.value = "";
-          feedSearch.hidden = true;
-          uiStore.set((s) => ({ ...s, feedSearchQuery: "", feedPage: 0 }));
-          return;
-        }
         const searchInput = document.getElementById("nt-search-input") as HTMLInputElement | null;
         if (searchInput && document.activeElement === searchInput) {
           searchInput.blur();
@@ -135,13 +128,6 @@ async function init() {
       focusSearch: () => {
         const input = document.getElementById("nt-search-input") as HTMLInputElement | null;
         input?.focus();
-      },
-      focusFeedSearch: () => {
-        const feedSearch = document.getElementById("nt-feed-search-input") as HTMLInputElement | null;
-        if (feedSearch) {
-          feedSearch.hidden = false;
-          feedSearch.focus();
-        }
       },
       toggleSettings: () => {
         uiStore.set((s) => ({ ...s, settingsOpen: !s.settingsOpen }));

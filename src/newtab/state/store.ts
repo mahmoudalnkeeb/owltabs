@@ -20,7 +20,6 @@ export interface UIState {
   aiPanelOpen: boolean;
   settingsOpen: boolean;
   activeFilter: string;
-  searchQuery: string;
   feedSearchQuery: string;
   feedPage: number;
 }
@@ -30,7 +29,6 @@ export const uiStore = createStore<UIState>({
   aiPanelOpen: false,
   settingsOpen: false,
   activeFilter: "all",
-  searchQuery: "",
   feedSearchQuery: "",
   feedPage: 0,
 });

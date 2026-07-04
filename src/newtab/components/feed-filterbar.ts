@@ -26,16 +26,6 @@ export function renderFeedFilterbar(settings: SyncStorageSettings) {
       <button class="nt-icon-btn" id="nt-feed-refresh-btn" aria-label="Refresh feeds" title="Refresh feeds">
         ${svgIcon("refresh", 15)}
       </button>
-      <button class="nt-icon-btn" id="nt-feed-search-btn" aria-label="Search in feed">
-        ${svgIcon("search", 15)}
-      </button>
-      <input
-        class="feed-search-input"
-        id="nt-feed-search-input"
-        type="text"
-        placeholder="Search articles…"
-        hidden
-      />
     </div>
   `;
 
@@ -60,23 +50,5 @@ export function renderFeedFilterbar(settings: SyncStorageSettings) {
     btn.style.animation = "";
     if (ok) showToast("Feeds refreshed", "mint");
     else showToast("Refresh failed", "red");
-  });
-
-  // Feed search toggle
-  const searchBtn = $("#nt-feed-search-btn");
-  const searchInput = $("#nt-feed-search-input") as HTMLInputElement;
-  searchBtn?.addEventListener("click", () => {
-    searchInput.hidden = !searchInput.hidden;
-    if (!searchInput.hidden) searchInput.focus();
-  });
-  searchInput?.addEventListener("input", () => {
-    uiStore.set((s) => ({ ...s, feedSearchQuery: searchInput.value.trim(), feedPage: 0 }));
-  });
-  searchInput?.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      searchInput.value = "";
-      searchInput.hidden = true;
-      uiStore.set((s) => ({ ...s, feedSearchQuery: "", feedPage: 0 }));
-    }
   });
 }

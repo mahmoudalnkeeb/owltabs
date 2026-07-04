@@ -1,7 +1,6 @@
 export interface KeyboardHandlers {
   escape: () => void;
   focusSearch: () => void;
-  focusFeedSearch: () => void;
   toggleSettings: () => void;
   toggleAI: () => void;
   activateQuickLink: (index: number) => void;
@@ -37,10 +36,6 @@ export function initKeyboard(handlers: KeyboardHandlers) {
       if (e.key === "/" || e.key === " ") {
         e.preventDefault();
         handlers.focusSearch();
-        return;
-      }
-      if (e.key === "f" || e.key === "F") {
-        handlers.focusFeedSearch();
         return;
       }
       if (e.key >= "1" && e.key <= "9") {
