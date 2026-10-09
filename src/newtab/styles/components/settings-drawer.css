@@ -99,21 +99,7 @@
   margin-top: 2px;
 }
 
-/* Form elements within settings */
-.settings-body .field {
-  background: var(--surface-2);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-sm);
-  padding: 8px 12px;
-  font-size: 13px;
-  color: var(--text-primary);
-  font-family: var(--font-sans);
-  outline: none;
-  transition: border-color var(--dur-fast);
-}
-.settings-body .field:focus {
-  border-color: var(--accent);
-}
+/* Form elements within settings (base .field styles live in layout.css) */
 .settings-body textarea.field {
   width: 100%;
   min-height: 80px;

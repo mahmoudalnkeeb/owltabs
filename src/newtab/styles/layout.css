@@ -166,6 +166,25 @@ body {
   to { opacity: 1; transform: none; }
 }
 
+/* Form fields */
+.field {
+  background: var(--surface-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  outline: none;
+  transition: border-color var(--dur-fast);
+}
+.field::placeholder {
+  color: var(--text-tertiary);
+}
+.field:focus {
+  border-color: var(--accent);
+}
+
 /* Buttons */
 .btn {
   appearance: none;
