@@ -1,7 +1,7 @@
 import type { AIConfig } from "../state/types";
 
-const GEMINI_ENDPOINT =
-  "https://generativelanguage.googleapis.com/v1beta/interactions?alt=sse";
+const GEMINI_ENDPOINT = (model: string, apiKey: string) =>
+  `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${encodeURIComponent(apiKey)}`;
 
 export class GeminiError extends Error {
   constructor(
@@ -15,7 +15,7 @@ export class GeminiError extends Error {
 
 export interface GeminiMessage {
   role: "user" | "model";
-  parts: { text: string }[];
+  parts: GeminiPart[];
 }
 
 export interface StreamMeta {
@@ -28,9 +28,13 @@ export interface ToolCall {
   arguments: Record<string, unknown>;
 }
 
-export const TOOLS: Record<string, unknown>[] = [
+export type GeminiPart =
+  | { text: string }
+  | { functionCall: { name: string; args?: Record<string, unknown> } }
+  | { functionResponse: { name: string; response: Record<string, unknown> } };
+
+const TOOL_DECLARATIONS: Record<string, unknown>[] = [
   {
-    type: "function",
     name: "save_article",
     description:
       "Save one or more articles for later reading. Pass article IDs (e.g. ID:sha1...), full URLs, or titles from the context above.",
@@ -47,7 +51,6 @@ export const TOOLS: Record<string, unknown>[] = [
     },
   },
   {
-    type: "function",
     name: "unsave_article",
     description: "Remove one or more articles from saved list.",
     parameters: {
@@ -63,7 +66,6 @@ export const TOOLS: Record<string, unknown>[] = [
     },
   },
   {
-    type: "function",
     name: "open_link",
     description: "Open a URL in a new browser tab.",
     parameters: {
@@ -75,7 +77,6 @@ export const TOOLS: Record<string, unknown>[] = [
     },
   },
   {
-    type: "function",
     name: "search",
     description: "Search the web using the default search engine.",
     parameters: {
@@ -87,12 +88,26 @@ export const TOOLS: Record<string, unknown>[] = [
     },
   },
   {
-    type: "function",
     name: "get_saved_articles",
     description: "Retrieve the user's saved articles. Returns a list of saved articles with their IDs, titles, feeds, and save dates.",
     parameters: {
       type: "object",
       properties: {},
+    },
+  },
+  {
+    name: "show_articles",
+    description: "Display one or more articles as visual cards in the interface. Always use this when the user asks to see articles or when presenting articles visually.",
+    parameters: {
+      type: "object",
+      properties: {
+        article_ids: {
+          type: "array",
+          items: { type: "string" },
+          description: "Array of article IDs (e.g. ID:sha1... or URLs) to display as cards",
+        },
+      },
+      required: ["article_ids"],
     },
   },
 ];
@@ -102,37 +117,24 @@ export async function* streamGemini(
   model: string,
   messages: GeminiMessage[],
   systemPrompt: string,
-  previousInteractionId?: string,
   meta?: StreamMeta,
   toolCalls?: ToolCall[],
-  continuationInput?: unknown,
+  signal?: AbortSignal,
 ): AsyncGenerator<string> {
   const body: Record<string, unknown> = {
-    model,
-    system_instruction: systemPrompt,
-    stream: true,
-    generation_config: { max_output_tokens: 1024, temperature: 0.7 },
-    tools: TOOLS,
+    systemInstruction: { parts: [{ text: systemPrompt }] },
+    contents: messages,
+    generationConfig: { maxOutputTokens: 1024, temperature: 0.7 },
+    tools: [{ functionDeclarations: TOOL_DECLARATIONS }],
   };
 
-  if (continuationInput !== undefined) {
-    body.input = continuationInput;
-  } else {
-    body.input = messages
-      .map((m) => m.parts.map((p) => p.text).join("\n"))
-      .join("\n\n");
-  }
-
-  if (previousInteractionId)
-    body.previous_interaction_id = previousInteractionId;
-
-  const res = await fetch(GEMINI_ENDPOINT, {
+  const res = await fetch(GEMINI_ENDPOINT(model, apiKey), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-goog-api-key": apiKey,
     },
     body: JSON.stringify(body),
+    signal,
   });
 
   if (!res.ok) {
@@ -143,7 +145,7 @@ export async function* streamGemini(
   const reader = res.body!.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
-  let currentToolCall: ToolCall | null = null;
+  let toolIndex = 0;
 
   while (true) {
     const { done, value } = await reader.read();
@@ -161,46 +163,20 @@ export async function* streamGemini(
         : trimmed;
       if (!jsonStr) continue;
       try {
-        const event = JSON.parse(jsonStr);
+        const chunk = JSON.parse(jsonStr);
+        if (chunk.responseId && meta) meta.interactionId = chunk.responseId;
 
-        if (event.event_type === "interaction.created" && meta) {
-          meta.interactionId = event.interaction?.id || "";
-        }
-
-        if (event.event_type === "step.delta" && event.delta?.type === "text") {
-          if (event.delta.text) yield event.delta.text;
-        }
-
-        if (
-          event.event_type === "step.start" &&
-          event.step?.type === "function_call"
-        ) {
-          currentToolCall = {
-            id: event.step.id || "",
-            name: event.step.name || "",
-            arguments: event.step.arguments || {},
-          };
-        }
-
-        if (
-          event.event_type === "step.delta" &&
-          event.delta?.type === "arguments_delta"
-        ) {
-          if (currentToolCall && event.delta.arguments) {
-            try {
-              const more = JSON.parse(event.delta.arguments);
-              Object.assign(currentToolCall.arguments, more);
-            } catch {
-              // partial JSON — skip
-            }
+        const parts = chunk.candidates?.[0]?.content?.parts || [];
+        for (const part of parts) {
+          if (part.text) {
+            yield part.text;
+          } else if (part.functionCall?.name && toolCalls) {
+            toolCalls.push({
+              id: `${part.functionCall.name}-${toolIndex++}`,
+              name: part.functionCall.name,
+              arguments: part.functionCall.args || {},
+            });
           }
-        }
-
-        if (event.event_type === "step.stop" && currentToolCall) {
-          if (currentToolCall.id && currentToolCall.name && toolCalls) {
-            toolCalls.push(currentToolCall);
-          }
-          currentToolCall = null;
         }
       } catch {
         // Ignore parse errors for malformed chunks
@@ -224,9 +200,12 @@ export function buildSystemPrompt(
     `You are an AI assistant embedded in a personal browser new tab dashboard.`,
     `The user has the following RSS feeds configured: ${feedLabels.join(", ") || "none"}.`,
     `Today's date is ${date}.`,
-    `If the user asks about their feed, use the provided article summaries.`,
-    `Keep responses concise and focused.`,
-    `You have access to tools: save_article (save one or more articles), unsave_article (remove saved), get_saved_articles (list saved articles), open_link (open URL in tab), search (web search). You can pass multiple IDs to save_article and unsave_article in a single call.`,
+    `The first user message may contain reference context. Treat it as private source material: do not quote it verbatim, do not dump raw bullet lists, and do not expose internal article IDs unless the user explicitly asks for IDs.`,
+    `When asked to summarize the feed, synthesize the articles into 3-5 themes with short explanations and a few notable article titles. Do not list every article.`,
+    `When asked what is trending, identify patterns across articles and explain why they matter. Prefer analysis over enumeration.`,
+    `When asked to show saved articles, use get_saved_articles and show_articles when matching saved articles are available.`,
+    `Keep responses concise, scannable, and focused. Use headings sparingly and avoid long introductions.`,
+    `You have access to tools: save_article (save one or more articles), unsave_article (remove saved), get_saved_articles (list saved articles), open_link (open URL in tab), search (web search), show_articles (display articles as visual cards). Use show_articles when the user asks to see articles or when cards would be more useful than prose. You can pass multiple IDs to save_article and unsave_article in a single call.`,
   ]
     .filter(Boolean)
     .join("\n");

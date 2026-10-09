@@ -28,6 +28,11 @@
     0 0 0 1px var(--mint);
 }
 
+.omnibox[data-mode="ai"]:focus-within {
+  border-color: #a855f7;
+  box-shadow: var(--ai-glow);
+}
+
 /* Spotlight — dim page when omnibox is focused */
 .nt-main.is-spotlight {
   opacity: 0.9;

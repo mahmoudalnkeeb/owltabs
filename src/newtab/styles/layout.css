@@ -45,6 +45,9 @@ body {
   flex-direction: column;
   min-height: 100vh;
 }
+.nt-main[hidden] {
+  display: none;
+}
 
 /* hero zone */
 .nt-hero {

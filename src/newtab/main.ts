@@ -5,7 +5,7 @@ import { renderOmnibox } from "./components/omnibox";
 import { renderQuickLinks } from "./components/quick-links";
 import { renderFeedGrid, setFeedSettings } from "./components/feed-grid";
 import { renderFeedFilterbar } from "./components/feed-filterbar";
-import { renderAIPanel } from "./components/ai-panel";
+import { setAISettings, initAIChat, toggleAIChat } from "./components/ai-chat";
 import { renderSettingsDrawer } from "./components/settings-drawer";
 import { storage } from "./services/storage";
 import { feedStore, uiStore } from "./state/store";
@@ -25,7 +25,7 @@ import "./styles/components/omnibox.css";
 import "./styles/components/quick-links.css";
 import "./styles/components/feed-card.css";
 import "./styles/components/feed-filterbar.css";
-import "./styles/components/ai-panel.css";
+import "./styles/components/ai-chat.css";
 import "./styles/components/settings-drawer.css";
 
 const FEED_STALE_MS = 5 * 60 * 1000;
@@ -105,13 +105,25 @@ async function init() {
     renderFeedFilterbar(settings);
     setFeedSettings(settings);
     renderFeedGrid();
-    renderAIPanel(settings);
+    setAISettings(settings);
     renderSettingsDrawer(settings);
+
+    // Wire AI chat and page toggling
+    const aiChat = document.getElementById("nt-ai-chat") as HTMLElement;
+    const pageMain = document.querySelector<HTMLElement>(".nt-main");
+    if (aiChat && pageMain) {
+      initAIChat(aiChat);
+      uiStore.subscribe(() => {
+        const { aiActive } = uiStore.get();
+        aiChat.hidden = !aiActive;
+        pageMain.hidden = aiActive;
+      });
+    }
 
     initKeyboard({
       escape: () => {
-        if (uiStore.get().aiPanelOpen) {
-          uiStore.set((s) => ({ ...s, aiPanelOpen: false }));
+        if (uiStore.get().aiActive) {
+          uiStore.set((s) => ({ ...s, aiActive: false }));
           return;
         }
         if (uiStore.get().settingsOpen) {
@@ -134,7 +146,7 @@ async function init() {
       },
       toggleAI: () => {
         if (!settings.ai.enabled || !settings.ai.geminiKey) return;
-        uiStore.set((s) => ({ ...s, aiPanelOpen: !s.aiPanelOpen }));
+        toggleAIChat();
       },
       activateQuickLink: (index: number) => {
         const links = document.querySelectorAll<HTMLAnchorElement>(".ql-tile[href]");
@@ -144,7 +156,7 @@ async function init() {
 
     // Backdrop click to close
     document.getElementById("nt-backdrop")?.addEventListener("click", () => {
-      uiStore.set((s) => ({ ...s, aiPanelOpen: false, settingsOpen: false }));
+      uiStore.set((s) => ({ ...s, settingsOpen: false }));
     });
 
     // Responsive feed columns on resize
@@ -195,7 +207,7 @@ async function init() {
       renderQuickLinks(settings);
       renderFeedFilterbar(settings);
       setFeedSettings(settings);
-      renderAIPanel(settings);
+      setAISettings(settings);
       renderSettingsDrawer(settings);
 
       // Re-parse with new feed config — drops removed feeds immediately

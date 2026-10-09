@@ -1,6 +1,7 @@
 import type { SyncStorageSettings } from "../state/types";
 import { uiStore } from "../state/store";
 import { $, svgIcon } from "../utils";
+import { toggleAIChat } from "./ai-chat";
 
 let clockIs24 = false;
 let prevClockChars: string[] = [];
@@ -20,11 +21,9 @@ export function renderTopbar(settings: SyncStorageSettings) {
     </div>
     <div class="topbar-controls">
       ${settings.ai.enabled && settings.ai.geminiKey ? `
-        <button class="topbar-ai-btn" id="nt-ai-btn" aria-label="Open AI Assistant">
-          ${svgIcon("sparkles", 12)}
-          <span>Assistant</span>
+        <button class="topbar-icon-btn" id="nt-ai-btn" aria-label="Open AI assistant" title="AI assistant">
+          ${svgIcon("sparkles", 16)}
         </button>
-        <div class="topbar-divider" role="separator" aria-hidden="true"></div>
       ` : ""}
       <button class="topbar-icon-btn" id="nt-settings-btn" aria-label="Settings">
         ${svgIcon("settings", 16)}
@@ -43,7 +42,7 @@ export function renderTopbar(settings: SyncStorageSettings) {
   });
 
   $("#nt-ai-btn")?.addEventListener("click", () => {
-    uiStore.set((s) => ({ ...s, aiPanelOpen: !s.aiPanelOpen }));
+    toggleAIChat();
   });
 }
 

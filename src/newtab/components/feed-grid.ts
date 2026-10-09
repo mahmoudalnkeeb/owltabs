@@ -4,6 +4,7 @@ import { storage } from "../services/storage";
 import { relativeTime } from "../services/rss";
 import { $, $$, escapeHtml, svgIcon, showToast } from "../utils";
 import { getDomain, resolveFavicons } from "../services/favicon";
+import { triggerAI } from "./ai-chat";
 
 const ITEMS_PER_PAGE = 16;
 
@@ -162,19 +163,18 @@ export function renderFeedGrid() {
       return;
     }
 
-    // Ask AI
+    // Ask AI — activate AI mode in omnibox
     const askBtn = target.closest<HTMLButtonElement>(".feed-card-ask-ai");
     if (askBtn) {
       e.preventDefault();
       e.stopPropagation();
       const card = askBtn.closest<HTMLElement>(".feed-card");
       const title = card?.dataset.title || "";
-      uiStore.set((s) => ({ ...s, aiPanelOpen: true }));
-      const aiInput = $("#nt-ai-input") as HTMLTextAreaElement | null;
-      if (aiInput) {
-        aiInput.value = `Summarize this article: ${title}`;
-        aiInput.focus();
+      if (!currentFeedSettings?.ai.enabled || !currentFeedSettings.ai.geminiKey) {
+        showToast("Configure AI in Settings first", "red");
+        return;
       }
+      triggerAI(`Summarize this article: ${title}`);
       return;
     }
 

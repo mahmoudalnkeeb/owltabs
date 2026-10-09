@@ -30,11 +30,8 @@
   --feed-thumb-aspect: 56.25%; /* 16:9 */
   --feed-favicon-size: 14px;
 
-  /* ---------- AI Panel ---------- */
-  --ai-panel-width: 380px;
-  --ai-panel-shadow: -12px 0 48px rgba(0, 0, 0, 0.5);
-  --ai-orb-size: 28px; /* topbar orb */
-  --ai-msg-radius: var(--r-md);
+  /* ---------- AI ---------- */
+  --ai-glow: 0 24px 80px rgba(0, 0, 0, 0.45), 0 0 0 1px #a855f7;
 
   /* ---------- Settings Drawer ---------- */
   --settings-width: 440px;

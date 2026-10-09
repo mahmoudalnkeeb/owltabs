@@ -31,7 +31,6 @@ export function initKeyboard(handlers: KeyboardHandlers) {
       handlers.toggleAI();
       return;
     }
-
     if (!inInput) {
       if (e.key === "/" || e.key === " ") {
         e.preventDefault();

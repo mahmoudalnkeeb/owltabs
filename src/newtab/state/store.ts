@@ -17,18 +17,22 @@ export function createStore<T>(initial: T) {
 }
 
 export interface UIState {
-  aiPanelOpen: boolean;
   settingsOpen: boolean;
   activeFilter: string;
   feedSearchQuery: string;
   feedPage: number;
+  aiActive: boolean;
+  aiResponseBlocks: import("./types").AIResponseBlock[];
+  aiStreaming: boolean;
 }
 
 export const feedStore = createStore<import("./types").FeedItem[]>([]);
 export const uiStore = createStore<UIState>({
-  aiPanelOpen: false,
   settingsOpen: false,
   activeFilter: "all",
   feedSearchQuery: "",
   feedPage: 0,
+  aiActive: false,
+  aiResponseBlocks: [],
+  aiStreaming: false,
 });

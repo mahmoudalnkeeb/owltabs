@@ -815,7 +815,7 @@ function initDataCustom() {
 
 function updateBackdrop() {
   const backdrop = $("#nt-backdrop") as HTMLElement;
-  const anyOpen = uiStore.get().aiPanelOpen || uiStore.get().settingsOpen;
+  const anyOpen = uiStore.get().settingsOpen;
   backdrop.hidden = !anyOpen;
   requestAnimationFrame(() => {
     backdrop.classList.toggle("is-visible", anyOpen);

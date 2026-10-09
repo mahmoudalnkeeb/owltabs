@@ -58,6 +58,17 @@ export interface FeedItem {
   savedAt: string | null;
 }
 
+export interface ChatMessage {
+  role: "user" | "model";
+  content: string;
+}
+
+export interface AIResponseBlock {
+  type: "user" | "text" | "cards" | "streaming";
+  content: string;
+  cardIds?: string[];
+}
+
 export interface LocalStorageCache {
   fetchedAt: number;
   items: FeedItem[];

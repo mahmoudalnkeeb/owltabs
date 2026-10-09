@@ -1,7 +1,8 @@
 import type { SyncStorageSettings } from "../state/types";
 import { SEARCH_ENGINES } from "../services/rss";
-import { uiStore } from "../state/store";
-import { $, svgIcon } from "../utils";
+import { uiStore, feedStore } from "../state/store";
+import { $, svgIcon, showToast } from "../utils";
+import { focusAIInput, triggerAI } from "./ai-chat";
 
 interface SearchMode {
   id: string;
@@ -29,6 +30,26 @@ const SEARCH_MODES: SearchMode[] = [
     hint: () => "in your feed",
     onEnter: (query) => {
       uiStore.set((s) => ({ ...s, feedSearchQuery: query, feedPage: 0 }));
+    },
+  },
+  {
+    id: "ai",
+    label: "AI",
+    hint: (s) => s.ai.enabled && s.ai.geminiKey ? "ask anything" : "not configured",
+    onEnter: (query, settings) => {
+      if (!settings.ai.enabled || !settings.ai.geminiKey) {
+        showToast("Configure AI in Settings first", "red");
+        return;
+      }
+      if (!feedStore.get().length) {
+        showToast("No feed data available for AI", "red");
+        return;
+      }
+      uiStore.set((s) => ({
+        ...s,
+        aiActive: true,
+      }));
+      triggerAI(query);
     },
   },
 ];
@@ -94,6 +115,20 @@ export function renderOmnibox(settings: SyncStorageSettings) {
     const mode = SEARCH_MODES.find((m) => m.id === modeId);
     if (mode && engineHint) {
       engineHint.textContent = mode.hint(settings);
+    }
+    if (modeId === "ai") {
+      const { aiResponseBlocks } = uiStore.get();
+      if (aiResponseBlocks.length > 0) {
+        // Restore existing conversation
+        uiStore.set((s) => ({ ...s, aiActive: true }));
+        focusAIInput();
+      }
+    } else {
+      // Collapse AI takeover when switching away
+      uiStore.set((s) => ({ ...s, aiActive: false }));
+      requestAnimationFrame(() => {
+        input.focus();
+      });
     }
   }
 
