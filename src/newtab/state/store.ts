@@ -20,7 +20,6 @@ export interface UIState {
   settingsOpen: boolean;
   activeFilter: string;
   feedSearchQuery: string;
-  feedPage: number;
   aiActive: boolean;
   aiResponseBlocks: import("./types").AIResponseBlock[];
   aiStreaming: boolean;
@@ -31,8 +30,10 @@ export const uiStore = createStore<UIState>({
   settingsOpen: false,
   activeFilter: "all",
   feedSearchQuery: "",
-  feedPage: 0,
   aiActive: false,
   aiResponseBlocks: [],
   aiStreaming: false,
 });
+
+/** IDs of articles the user has opened, persisted in chrome.storage.local. */
+export const readStore = createStore<ReadonlySet<string>>(new Set());

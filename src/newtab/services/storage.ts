@@ -20,7 +20,8 @@ export const DEFAULT_SETTINGS: SyncStorageSettings = {
     systemPrompt: "",
   },
   appearance: {
-    feedColumns: 3,
+    showThumbnails: true,
+    focusSearchOnOpen: true,
     fontScale: 1.0,
     showClock: true,
     clockFormat: "12",

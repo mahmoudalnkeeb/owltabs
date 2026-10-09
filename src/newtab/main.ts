@@ -3,8 +3,10 @@ import { initKeyboard } from "./keyboard";
 import { renderTopbar } from "./components/topbar";
 import { renderOmnibox } from "./components/omnibox";
 import { renderQuickLinks } from "./components/quick-links";
-import { renderFeedGrid, setFeedSettings } from "./components/feed-grid";
-import { renderFeedFilterbar, clearFeedSearch } from "./components/feed-filterbar";
+import { renderFeedList, setFeedSettings, moveSelection, actOnSelection } from "./components/feed-list";
+import { renderFeedSidebar, clearFeedSearch } from "./components/feed-sidebar";
+import { loadReadState } from "./services/read";
+import { shortcutsOpen, toggleShortcuts } from "./components/shortcuts";
 import { setAISettings, initAIChat, toggleAIChat } from "./components/ai-chat";
 import { renderSettingsDrawer } from "./components/settings-drawer";
 import { storage } from "./services/storage";
@@ -24,8 +26,9 @@ import "./styles/layout.css";
 import "./styles/components/topbar.css";
 import "./styles/components/omnibox.css";
 import "./styles/components/quick-links.css";
-import "./styles/components/feed-card.css";
-import "./styles/components/feed-filterbar.css";
+import "./styles/components/feed-list.css";
+import "./styles/components/feed-sidebar.css";
+import "./styles/components/shortcuts.css";
 import "./styles/components/ai-chat.css";
 import "./styles/components/settings-drawer.css";
 
@@ -43,25 +46,11 @@ window.addEventListener("unhandledrejection", (e) => {
 
 function applyAppearance(settings: Awaited<ReturnType<typeof storage.getSettings>>) {
   const { appearance } = settings;
-  applyFeedColumns(appearance.feedColumns);
   document.documentElement.style.setProperty("font-size", `${appearance.fontScale * 100}%`);
   if (appearance.accentColor) {
     document.documentElement.style.setProperty("--accent", appearance.accentColor);
   }
   document.body.classList.toggle("grayscale", !!appearance.grayscale);
-}
-
-function applyFeedColumns(pref: 2 | 3 | 4) {
-  const w = window.innerWidth;
-  // On narrow viewports, let CSS media queries decide — remove the inline
-  // override so the responsive fallback in layout.css takes effect.
-  if (w < 960 && pref > 1) {
-    document.documentElement.style.removeProperty("--feed-cols");
-  } else if (w < 1280 && pref > 3) {
-    document.documentElement.style.setProperty("--feed-cols", "3");
-  } else {
-    document.documentElement.style.setProperty("--feed-cols", String(pref));
-  }
 }
 
 async function mergeSavedStatus(items: FeedItem[]) {
@@ -121,46 +110,60 @@ async function init() {
   try {
     await migrateIfNeeded();
     let settings = await storage.getSettings();
+
+    // Chrome gives the address bar focus on new-tab override pages, and the
+    // page can't take it back. A page-initiated navigation to the same page
+    // makes it an ordinary tab, so the search box can be focused.
+    const focusRequested = new URLSearchParams(location.search).has("focus");
+    if (settings.appearance.focusSearchOnOpen && !focusRequested && chrome.runtime?.id) {
+      location.replace(`${location.pathname}?focus`);
+      return;
+    }
     applyAppearance(settings);
+
+    await loadReadState();
 
     renderTopbar(settings);
     renderOmnibox(settings);
     renderQuickLinks(settings);
-    renderFeedFilterbar(settings);
+    renderFeedSidebar(settings);
     setFeedSettings(settings);
-    renderFeedGrid();
+    renderFeedList();
     setAISettings(settings);
     renderSettingsDrawer(settings);
 
-    // Wire AI chat and page toggling
-    const aiChat = document.getElementById("nt-ai-chat") as HTMLElement;
-    const pageMain = document.querySelector<HTMLElement>(".nt-main");
-    if (aiChat && pageMain) {
+    const topbar = document.getElementById("nt-topbar");
+    const markScrolled = () => topbar?.classList.toggle("is-scrolled", window.scrollY > 4);
+    window.addEventListener("scroll", markScrolled, { passive: true });
+    markScrolled();
+
+    // AI chat is a side panel; on wide screens the page makes room for it.
+    const aiChat = document.getElementById("nt-ai-chat");
+    if (aiChat) {
       initAIChat(aiChat);
-      uiStore.subscribe(() => {
-        const { aiActive } = uiStore.get();
-        aiChat.hidden = !aiActive;
-        pageMain.hidden = aiActive;
+      uiStore.subscribe(({ aiActive }) => {
+        document.body.classList.toggle("ai-open", aiActive);
+        document.getElementById("nt-ai-btn")?.setAttribute("aria-pressed", String(aiActive));
       });
     }
 
     initKeyboard({
       escape: () => {
-        if (uiStore.get().aiActive) {
-          uiStore.set((s) => ({ ...s, aiActive: false }));
-          return;
-        }
+        // The shortcuts dialog closes itself on Esc; don't also close panels behind it.
+        if (shortcutsOpen()) return;
         if (uiStore.get().settingsOpen) {
           uiStore.set((s) => ({ ...s, settingsOpen: false }));
           return;
         }
-        const searchInput = document.getElementById("nt-search-input") as HTMLInputElement | null;
-        if (searchInput && document.activeElement === searchInput) {
-          searchInput.blur();
-          searchInput.value = "";
+        if (uiStore.get().aiActive) {
+          uiStore.set((s) => ({ ...s, aiActive: false }));
+          return;
         }
         clearFeedSearch();
       },
+      moveSelection,
+      rowAction: actOnSelection,
+      toggleShortcuts,
       focusSearch: () => {
         const input = document.getElementById("nt-search-input") as HTMLInputElement | null;
         input?.focus();
@@ -172,10 +175,7 @@ async function init() {
         if (!settings.ai.enabled || !settings.ai.geminiKey) return;
         toggleAIChat();
       },
-      isPanelOpen: () => {
-        const { aiActive, settingsOpen } = uiStore.get();
-        return aiActive || settingsOpen;
-      },
+      isPanelOpen: () => uiStore.get().settingsOpen || shortcutsOpen(),
       activateQuickLink: (index: number) => {
         const links = document.querySelectorAll<HTMLAnchorElement>(".ql-tile[href]");
         links[index]?.click();
@@ -187,18 +187,7 @@ async function init() {
       uiStore.set((s) => ({ ...s, settingsOpen: false }));
     });
 
-    // Responsive feed columns on resize
-    let resizeTimer: ReturnType<typeof setTimeout>;
-    window.addEventListener("resize", () => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => applyFeedColumns(settings.appearance.feedColumns), 100);
-    });
-
-    // Spotlight — dim page when omnibox is focused
-    const searchInput = document.getElementById("nt-search-input") as HTMLInputElement | null;
-    const mainEl = document.querySelector<HTMLElement>(".nt-main");
-    searchInput?.addEventListener("focus", () => mainEl?.classList.add("is-spotlight"));
-    searchInput?.addEventListener("blur", () => mainEl?.classList.remove("is-spotlight"));
+    document.getElementById("nt-search-input")?.focus();
 
     // Load cached feed immediately (for instant render)
     const cache = await storage.getFeedCache();
@@ -235,7 +224,7 @@ async function init() {
       renderTopbar(settings);
       renderOmnibox(settings);
       renderQuickLinks(settings);
-      renderFeedFilterbar(settings);
+      renderFeedSidebar(settings);
       setFeedSettings(settings);
       setAISettings(settings);
       renderSettingsDrawer(settings);

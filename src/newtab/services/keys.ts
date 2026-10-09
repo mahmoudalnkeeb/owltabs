@@ -15,5 +15,6 @@ export const KEYS = {
   FEED_STRATEGIES: `${APP_PREFIX}_feed_strategies_v2`,
   ARTICLE_IMAGES:  `${APP_PREFIX}_article_images_v2`,
   FAVICON_CACHE:   `${APP_PREFIX}_favicon_cache_v2`,
+  READ_ARTICLES:   `${APP_PREFIX}_read_articles_v1`,
   MIGRATED:        `${APP_PREFIX}_migrated_v1`,
 } as const;

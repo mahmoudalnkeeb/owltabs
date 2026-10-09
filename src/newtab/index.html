@@ -12,26 +12,27 @@
     />
   </head>
   <body>
-    <!-- Topbar -->
-    <header class="topbar" id="nt-topbar"></header>
+    <!-- Header: clock, search, actions -->
+    <header class="topbar" id="nt-topbar">
+      <div class="topbar-clock" id="nt-clock"></div>
+      <div class="omnibox" id="nt-omnibox" role="search"></div>
+      <div class="topbar-controls" id="nt-controls"></div>
+    </header>
 
-    <!-- Main Content -->
     <main class="nt-main">
-      <!-- Hero Section -->
-      <section class="nt-hero fade-up delay-1" id="nt-hero">
-        <div class="omnibox" id="nt-omnibox" role="search"></div>
-        <nav class="ql-grid" aria-label="Quick links" id="nt-quicklinks"></nav>
-      </section>
+      <nav class="ql-grid" aria-label="Quick links" id="nt-quicklinks"></nav>
 
-      <!-- Feed Section -->
-      <section class="nt-feed-zone fade-up delay-2" id="nt-feed-zone">
-        <div class="feed-filterbar" id="nt-feed-filterbar"></div>
-        <div class="feed-grid" id="nt-feed-grid"></div>
-      </section>
+      <div class="reader">
+        <aside class="feed-sidebar" id="nt-feed-sidebar" aria-label="Feed filters"></aside>
+        <section class="feed-pane" aria-labelledby="nt-feed-head">
+          <div class="list-head" id="nt-feed-head"></div>
+          <div class="feed-list" id="nt-feed-list" role="list"></div>
+        </section>
+      </div>
     </main>
 
-    <!-- AI Chat (full-page takeover) -->
-    <section class="ai-chat" id="nt-ai-chat" hidden></section>
+    <!-- AI assistant side panel -->
+    <aside class="ai-chat" id="nt-ai-chat" aria-label="AI assistant" hidden></aside>
 
     <!-- Settings Drawer -->
     <aside

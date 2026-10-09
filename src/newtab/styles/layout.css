@@ -13,84 +13,85 @@ body {
   position: relative;
 }
 
+/* ─── Header ─────────────────────────────────────────── */
+
 .topbar {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: var(--z-topbar);
-
-  display: flex;
+  height: var(--nt-topbar-height);
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 1fr minmax(0, var(--omnibox-width)) 1fr;
   align-items: center;
-  justify-content: space-between;
-  padding: 13px var(--sp-6);
-
-  background: linear-gradient(
-    to bottom,
-    rgba(8, 8, 8, 0.65) 0%,
-    transparent 100%
-  );
-
-  animation: topbarIn var(--dur-deliberate) var(--ease-out) both;
+  gap: var(--sp-4);
+  padding: 0 var(--sp-6);
+  background: rgba(16, 16, 16, 0.97);
+  backdrop-filter: blur(14px) saturate(1.2);
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--dur-base) var(--ease-standard);
+}
+/* Set by main.ts once the page scrolls, so the bar separates from content */
+.topbar.is-scrolled {
+  border-bottom-color: var(--border-subtle);
+}
+.topbar .topbar-controls {
+  justify-self: end;
 }
 
-@keyframes topbarIn {
-  from { opacity: 0; transform: translateY(-6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
+/* ─── Page ───────────────────────────────────────────── */
 
 .nt-main {
-  padding-top: 56px;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-.nt-main[hidden] {
-  display: none;
-}
-
-/* hero zone */
-.nt-hero {
-  padding: 40px var(--sp-6) var(--nt-hero-pb);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--sp-6);
-}
-
-/* feed zone — fills remainder */
-.nt-feed-zone {
-  flex: 1;
   max-width: var(--nt-content-width);
-  width: 100%;
   margin: 0 auto;
-  padding: 0 var(--sp-6) var(--sp-10);
-  overflow-x: hidden;
+  padding: calc(var(--nt-topbar-height) + var(--sp-5)) var(--sp-6) var(--sp-16);
   box-sizing: border-box;
+  transition: padding-right var(--dur-slow) var(--ease-out);
+  animation: pageIn var(--dur-deliberate) var(--ease-out) both;
+}
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
 }
 
-/* feed grid */
-.feed-grid {
+/* Wide screens: the AI panel docks beside the reader instead of covering it */
+@media (min-width: 1280px) {
+  body.ai-open .nt-main {
+    max-width: calc(var(--nt-content-width) + var(--ai-panel-width));
+    padding-right: calc(var(--ai-panel-width) + var(--sp-6));
+  }
+}
+
+.reader {
   display: grid;
-  grid-template-columns: repeat(var(--feed-cols), 1fr);
-  gap: var(--sp-5);
-  overflow: hidden;
+  grid-template-columns: var(--nt-sidebar-width) minmax(0, var(--nt-list-width));
+  gap: var(--sp-10);
+  align-items: start;
 }
 
-/* Responsive breakpoints */
-@media (max-width: 1279px) {
-  :root {
-    --feed-cols: 3;
+.feed-pane {
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .reader {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-3);
   }
 }
-@media (max-width: 959px) {
-  :root {
-    --feed-cols: 2;
+@media (max-width: 720px) {
+  .topbar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 0 var(--sp-4);
   }
-}
-@media (max-width: 640px) {
-  :root {
-    --feed-cols: 1;
+  .topbar .topbar-clock {
+    display: none;
+  }
+  .nt-main {
+    padding-left: var(--sp-4);
+    padding-right: var(--sp-4);
   }
 }
 
@@ -109,23 +110,6 @@ body {
 }
 .nt-backdrop[hidden] {
   display: none;
-}
-
-/* Entrance animations */
-.fade-up {
-  animation: fadeUp 0.6s var(--ease-out) forwards;
-  opacity: 0;
-  transform: translateY(20px);
-}
-.delay-1 { animation-delay: 0ms; }
-.delay-2 { animation-delay: 60ms; }
-.delay-3 { animation-delay: 120ms; }
-
-@keyframes fadeUp {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 /* Toast region */
@@ -307,10 +291,11 @@ body {
 }
 
 /* Grayscale mode — images only */
-.grayscale .feed-card-thumb img {
+.grayscale .row-thumb img {
   filter: grayscale(1) opacity(0.65);
 }
-.grayscale .feed-card:hover .feed-card-thumb img {
+.grayscale .row:hover .row-thumb img,
+.grayscale .row.is-selected .row-thumb img {
   filter: grayscale(0) opacity(1);
 }
 .grayscale .ql-icon img {
@@ -318,4 +303,37 @@ body {
 }
 .grayscale .ql-tile:hover .ql-icon img {
   filter: grayscale(0) opacity(1);
+}
+
+kbd {
+  font: 500 10.5px/1 var(--font-mono);
+  color: var(--text-secondary);
+  background: var(--surface-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-xs);
+  padding: 2px 5px;
+}
+
+.chip {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--r-full);
+  border: 1px solid var(--border-default);
+  background: var(--surface-1);
+  color: var(--text-secondary);
+  font: 500 12.5px/1.2 var(--font-sans);
+  cursor: pointer;
+  transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast);
+}
+.chip:hover {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+.chip:disabled {
+  opacity: 0.5;
+  pointer-events: none;
 }

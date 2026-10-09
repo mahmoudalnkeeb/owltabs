@@ -1,64 +1,63 @@
 import type { SyncStorageSettings } from "../state/types";
 import { SEARCH_ENGINES } from "../services/rss";
-import { uiStore, feedStore } from "../state/store";
-import { $, svgIcon, showToast } from "../utils";
-import { focusAIInput, triggerAI } from "./ai-chat";
-import { clearFeedSearch } from "./feed-filterbar";
+import { feedStore, uiStore } from "../state/store";
+import { escapeHtml, svgIcon, showToast } from "../utils";
+import { triggerAI } from "./ai-chat";
+import { aiConfigured } from "./article-row";
+import { clearFeedSearch, matchesFilter } from "./feed-sidebar";
+import { moveSelection } from "./feed-list";
 
-interface SearchMode {
-  id: string;
-  label: string;
-  hint: (s: SyncStorageSettings) => string;
-  onEnter: (query: string, settings: SyncStorageSettings) => void;
+const ENGINE_NAMES: Record<SyncStorageSettings["searchEngine"], string> = {
+  brave: "Brave",
+  google: "Google",
+  ddg: "DuckDuckGo",
+  bing: "Bing",
+  custom: "the web",
+};
+
+const isMac = navigator.platform.toUpperCase().includes("MAC");
+const MOD = isMac ? "⌘" : "Ctrl";
+
+type ActionId = "web" | "ai";
+
+let settings: SyncStorageSettings;
+let built = false;
+
+function searchWeb(query: string): void {
+  const engine = settings.searchEngine === "custom"
+    ? settings.customSearchUrl
+    : SEARCH_ENGINES[settings.searchEngine] || SEARCH_ENGINES.brave;
+  const url = engine.replace("{query}", encodeURIComponent(query));
+  window.open(url, settings.openLinksIn === "new_tab" ? "_blank" : "_self");
 }
 
-const SEARCH_MODES: SearchMode[] = [
-  {
-    id: "web",
-    label: "Web",
-    hint: (s) => `via ${s.searchEngine}`,
-    onEnter: (query, settings) => {
-      const engine = settings.searchEngine === "custom"
-        ? settings.customSearchUrl
-        : SEARCH_ENGINES[settings.searchEngine] || SEARCH_ENGINES.brave;
-      const url = engine.replace("{query}", encodeURIComponent(query));
-      window.open(url, settings.openLinksIn === "new_tab" ? "_blank" : "_self");
-    },
-  },
-  {
-    id: "feed",
-    label: "Feed",
-    hint: () => "in your feed",
-    onEnter: (query) => {
-      uiStore.set((s) => ({ ...s, feedSearchQuery: query, feedPage: 0 }));
-    },
-  },
-  {
-    id: "ai",
-    label: "AI",
-    hint: (s) => s.ai.enabled && s.ai.geminiKey ? "ask anything" : "not configured",
-    onEnter: (query, settings) => {
-      if (!settings.ai.enabled || !settings.ai.geminiKey) {
-        showToast("Configure AI in Settings first", "red");
-        return;
-      }
-      if (!feedStore.get().length) {
-        showToast("No feed data available for AI", "red");
-        return;
-      }
-      uiStore.set((s) => ({
-        ...s,
-        aiActive: true,
-      }));
-      triggerAI(query);
-    },
-  },
-];
+function askAI(query: string): void {
+  if (!aiConfigured(settings)) {
+    showToast("Turn on AI in Settings first", "red");
+    return;
+  }
+  triggerAI(query);
+}
 
-export function renderOmnibox(settings: SyncStorageSettings) {
-  const found = $("#nt-omnibox") as HTMLElement | null;
-  if (!found) return;
-  const container: HTMLElement = found;
+function feedMatchCount(query: string): number {
+  const q = query.toLowerCase();
+  const { activeFilter } = uiStore.get();
+  return feedStore.get().filter(
+    (i) =>
+      matchesFilter(i, activeFilter) &&
+      (i.title.toLowerCase().includes(q) ||
+        i.excerpt.toLowerCase().includes(q) ||
+        i.feedLabel.toLowerCase().includes(q)),
+  ).length;
+}
+
+export function renderOmnibox(next: SyncStorageSettings): void {
+  settings = next;
+  const container = document.getElementById("nt-omnibox");
+  if (!container) return;
+  // Built once: re-rendering would drop focus and the typed query on settings saves.
+  if (built) return;
+  built = true;
 
   container.innerHTML = `
     <div class="omnibox-row">
@@ -67,103 +66,127 @@ export function renderOmnibox(settings: SyncStorageSettings) {
         class="omnibox-input"
         id="nt-search-input"
         type="text"
-        placeholder="Search the web or your feed…"
+        placeholder="Search your feed or the web"
         autocomplete="off"
         spellcheck="false"
+        role="combobox"
+        aria-expanded="false"
+        aria-controls="nt-omnibox-menu"
+        aria-autocomplete="list"
         aria-label="Search"
       />
-      <kbd class="omnibox-kbd" id="nt-search-kbd">⌘K</kbd>
+      <kbd class="omnibox-kbd">${MOD}K</kbd>
+      <span class="omnibox-browse-hint" aria-hidden="true"><kbd>↓</kbd> to browse</span>
     </div>
-    <div class="omnibox-foot" id="nt-omnibox-foot" hidden>
-      <div class="pillrow" role="tablist" aria-label="Search mode">
-        ${SEARCH_MODES.map((mode, i) => `
-          <button class="pill ${i === 0 ? "active" : ""}" role="tab" data-mode="${mode.id}" aria-selected="${i === 0}">${mode.label}</button>
-        `).join("")}
-      </div>
-      <span class="omnibox-engine-hint" id="nt-engine-hint">${SEARCH_MODES[0].hint(settings)}</span>
-    </div>
+    <div class="omnibox-menu" id="nt-omnibox-menu" role="listbox" aria-label="Search actions" hidden></div>
   `;
 
-  const input = $("#nt-search-input") as HTMLInputElement;
-  const foot = $("#nt-omnibox-foot") as HTMLDivElement;
-  const kbd = $("#nt-search-kbd") as HTMLElement;
-  const engineHint = $("#nt-engine-hint") as HTMLElement;
+  const input = container.querySelector<HTMLInputElement>("#nt-search-input")!;
+  const menu = container.querySelector<HTMLElement>("#nt-omnibox-menu")!;
+  let active: ActionId = "web";
+  let filterTimer: ReturnType<typeof setTimeout> | undefined;
 
-  // Platform-aware shortcut label
-  const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
-  kbd.textContent = isMac ? "⌘K" : "Ctrl+K";
+  const actions = (): ActionId[] => (aiConfigured(settings) ? ["web", "ai"] : ["web"]);
 
-  input.addEventListener("focus", () => {
-    foot.hidden = false;
-  });
+  function renderMenu(): void {
+    const q = input.value.trim();
+    const open = !!q && document.activeElement === input;
+    menu.hidden = !open;
+    input.setAttribute("aria-expanded", String(open));
+    if (!open) return;
 
-  input.addEventListener("blur", () => {
-    // Delay to allow clicking pills
-    setTimeout(() => {
-      if (!container.matches(":focus-within")) {
-        foot.hidden = true;
-      }
-    }, 200);
-  });
+    const quoted = `“${escapeHtml(q)}”`;
+    const count = feedMatchCount(q);
+    const option = (id: ActionId, icon: string, label: string, key: string) => `
+      <div class="omnibox-option${id === active ? " is-active" : ""}" role="option" id="nt-opt-${id}" data-action="${id}" aria-selected="${id === active}">
+        <span class="omnibox-option-icon">${icon}</span>
+        <span class="omnibox-option-label">${label}</span>
+        <kbd>${key}</kbd>
+      </div>`;
 
-  function setMode(modeId: string) {
-    const pills = container.querySelectorAll<HTMLButtonElement>(".pill");
-    pills.forEach((p) => {
-      const active = p.dataset.mode === modeId;
-      p.classList.toggle("active", active);
-      p.setAttribute("aria-selected", String(active));
-    });
-    container.dataset.mode = modeId;
-    const mode = SEARCH_MODES.find((m) => m.id === modeId);
-    if (mode && engineHint) {
-      engineHint.textContent = mode.hint(settings);
-    }
-    if (modeId === "ai") {
-      const { aiResponseBlocks } = uiStore.get();
-      if (aiResponseBlocks.length > 0) {
-        // Restore existing conversation
-        uiStore.set((s) => ({ ...s, aiActive: true }));
-        focusAIInput();
-      }
-    } else {
-      // Collapse AI takeover when switching away
-      uiStore.set((s) => ({ ...s, aiActive: false }));
-      requestAnimationFrame(() => {
-        input.focus();
-      });
-    }
+    menu.innerHTML = `
+      ${option("web", svgIcon("search", 14), `Search ${ENGINE_NAMES[settings.searchEngine]} for ${quoted}`, "↵")}
+      ${actions().includes("ai") ? option("ai", svgIcon("sparkles", 14), `Ask AI about ${quoted}`, `${MOD} ↵`) : ""}
+      <div class="omnibox-menu-note">
+        ${count
+          ? `${count} matching ${count === 1 ? "article" : "articles"} shown below`
+          : "No matching articles in your feed"}
+      </div>
+    `;
+    input.setAttribute("aria-activedescendant", `nt-opt-${active}`);
   }
 
-  container.addEventListener("click", (e) => {
-    const pill = (e.target as HTMLElement).closest(".pill") as HTMLButtonElement | null;
-    if (!pill) return;
-    setMode(pill.dataset.mode || SEARCH_MODES[0].id);
-    input.focus();
+  function run(action: ActionId): void {
+    const q = input.value.trim();
+    if (!q) return;
+    if (action === "web") searchWeb(q);
+    else askAI(q);
+    input.blur();
+  }
+
+  input.addEventListener("input", () => {
+    active = "web";
+    renderMenu();
+    clearTimeout(filterTimer);
+    filterTimer = setTimeout(() => {
+      const q = input.value.trim();
+      if (q) uiStore.set((s) => ({ ...s, feedSearchQuery: q }));
+      else clearFeedSearch();
+    }, 120);
+  });
+
+  input.addEventListener("focus", renderMenu);
+  input.addEventListener("blur", () => {
+    menu.hidden = true;
+    input.setAttribute("aria-expanded", "false");
   });
 
   input.addEventListener("keydown", (e) => {
-    // Shift+Tab cycles search modes while the search input is focused.
-    if (e.shiftKey && e.key === "Tab") {
+    // From an empty box, ↓ hands the keyboard to the article list.
+    if (e.key === "ArrowDown" && !input.value) {
       e.preventDefault();
-      const currentMode = container.dataset.mode || SEARCH_MODES[0].id;
-      const currentIndex = SEARCH_MODES.findIndex((m) => m.id === currentMode);
-      const nextIndex = (currentIndex + 1) % SEARCH_MODES.length;
-      setMode(SEARCH_MODES[nextIndex].id);
+      // Focus lands in the list now; don't let the page-level ↓ handler move it again.
+      e.stopPropagation();
+      input.blur();
+      moveSelection(1);
       return;
     }
-
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      const list = actions();
+      if (menu.hidden || list.length < 2) return;
+      e.preventDefault();
+      const i = list.indexOf(active);
+      active = list[(i + (e.key === "ArrowDown" ? 1 : list.length - 1)) % list.length];
+      renderMenu();
+      return;
+    }
     if (e.key === "Enter") {
       e.preventDefault();
-      const modeId = container.dataset.mode || SEARCH_MODES[0].id;
-      const query = input.value.trim();
-      if (!query) {
-        if (modeId === "feed") clearFeedSearch();
-        return;
-      }
-      const mode = SEARCH_MODES.find((m) => m.id === modeId);
-      if (mode) mode.onEnter(query, settings);
-      input.blur();
-      foot.hidden = true;
+      run(e.metaKey || e.ctrlKey ? "ai" : active);
+      return;
     }
+    if (e.key === "Escape") {
+      // Handled here so the page-level Escape doesn't also close panels.
+      e.stopPropagation();
+      if (input.value) {
+        input.value = "";
+        clearFeedSearch();
+        renderMenu();
+      } else {
+        input.blur();
+      }
+    }
+  });
+
+  // mousedown keeps focus in the input, so blur doesn't hide the menu first.
+  menu.addEventListener("mousedown", (e) => {
+    const option = (e.target as HTMLElement).closest<HTMLElement>("[data-action]");
+    if (!option) return;
+    e.preventDefault();
+    run(option.dataset.action as ActionId);
+  });
+
+  feedStore.subscribe(() => {
+    if (!menu.hidden) renderMenu();
   });
 }

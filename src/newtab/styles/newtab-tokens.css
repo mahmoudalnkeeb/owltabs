@@ -5,36 +5,31 @@
 
 :root {
   /* ---------- Layout geometry ---------- */
-  --nt-content-width: 1320px; /* max-width for center column */
-  --nt-topbar-height: 52px; /* sticky topbar */
-  --nt-hero-pb: 32px; /* padding-bottom of hero zone */
-  --nt-section-gap: 40px; /* vertical gap between page sections */
+  /* Reader = sidebar + gap + list, plus the page's side padding */
+  --nt-content-width: calc(var(--nt-sidebar-width) + 40px + var(--nt-list-width) + 48px);
+  --nt-topbar-height: 64px; /* fixed header */
+  --nt-sidebar-width: 220px;
+  --nt-list-width: 780px; /* headline list max-width; keeps lines readable */
+  --ai-panel-width: 420px;
 
   /* ---------- Omnibox ---------- */
-  --omnibox-width: 620px;
-  --omnibox-height: 52px; /* inner input row height */
+  --omnibox-width: 600px;
+  --omnibox-height: 40px; /* inner input row height */
   --omnibox-radius: var(--r-xl);
   --omnibox-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
   --omnibox-shadow-focus:
     0 24px 80px rgba(0, 0, 0, 0.45), 0 0 0 1px var(--accent);
 
-  /* ---------- Quick Links ---------- */
-  --ql-cols: 6; /* default columns (overridden by JS) */
-  --ql-tile-size: 44px; /* favicon tile width/height */
-  --ql-tile-radius: var(--r-md);
-  --ql-label-size: 11px;
-
-  /* ---------- Feed ---------- */
-  --feed-cols: 4; /* overridden by settings: 2 | 3 | 4 */
-  --feed-card-radius: var(--r-lg);
-  --feed-thumb-aspect: 56.25%; /* 16:9 */
-  --feed-favicon-size: 14px;
+  /* ---------- Feed list ---------- */
+  --row-time-col: 52px; /* mono time gutter; fits "Sep 29" */
+  --row-thumb-w: 84px;
+  --row-thumb-h: 56px;
 
   /* ---------- AI ---------- */
-  --ai-glow: 0 24px 80px rgba(0, 0, 0, 0.45), 0 0 0 1px #a855f7;
+  --ai-glow: 0 24px 80px rgba(0, 0, 0, 0.45), 0 0 0 1px var(--accent);
 
   /* ---------- Settings Drawer ---------- */
-  --settings-width: 440px;
+  --settings-width: 760px;
   --settings-shadow: -8px 0 32px rgba(0, 0, 0, 0.45);
 
   /* ---------- Skeleton / loading ---------- */

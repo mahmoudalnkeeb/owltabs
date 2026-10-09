@@ -34,7 +34,9 @@ export interface AIConfig {
 }
 
 export interface AppearanceConfig {
-  feedColumns: 2 | 3 | 4;
+  showThumbnails: boolean;
+  /** Re-open the page once so the search box gets focus instead of the address bar. */
+  focusSearchOnOpen: boolean;
   fontScale: 0.9 | 1.0 | 1.1 | 1.2;
   showClock: boolean;
   clockFormat: "12" | "24";

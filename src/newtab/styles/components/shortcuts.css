@@ -1,0 +1,77 @@
+/* ============================================================
+   shortcuts.css: keyboard shortcuts dialog
+   ============================================================ */
+
+.shortcuts {
+  width: min(560px, calc(100vw - 32px));
+  padding: 0;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  background: var(--surface-1);
+  color: var(--text-primary);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+}
+.shortcuts[open] {
+  animation: shortcutsIn var(--dur-base) var(--ease-out);
+}
+.shortcuts::backdrop {
+  background: var(--backdrop);
+  backdrop-filter: var(--backdrop-blur);
+}
+@keyframes shortcutsIn {
+  from { opacity: 0; transform: translateY(6px) scale(0.99); }
+  to   { opacity: 1; transform: none; }
+}
+
+.shortcuts-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-5);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.shortcuts-head h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.shortcuts-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-6);
+  padding: var(--sp-5);
+}
+.shortcuts-body h3 {
+  margin: 0 0 var(--sp-3);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+.shortcuts-body dl {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+}
+.shortcuts-body dl div {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: 13px;
+}
+.shortcuts-body dt {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-tertiary);
+  font-size: 11px;
+}
+.shortcuts-body dd {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 560px) {
+  .shortcuts-body { grid-template-columns: 1fr; }
+}

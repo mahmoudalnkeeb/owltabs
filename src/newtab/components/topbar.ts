@@ -4,40 +4,36 @@ import { $, svgIcon } from "../utils";
 import { toggleAIChat } from "./ai-chat";
 
 let clockIs24 = false;
-let prevClockChars: string[] = [];
 let clockTimer: ReturnType<typeof setInterval> | undefined;
 
 export function renderTopbar(settings: SyncStorageSettings) {
   clockIs24 = settings.appearance.clockFormat === "24";
-  const header = $("#nt-topbar");
-  if (!header) return;
+  const clock = $("#nt-clock");
+  const controls = $("#nt-controls");
+  if (!clock || !controls) return;
 
-  header.innerHTML = `
-    <div class="topbar-clock">
-      ${settings.appearance.showClock ? `
-        <time class="clock-time" id="topbar-time" aria-live="off" aria-atomic="true"></time>
-        <span class="clock-sep" aria-hidden="true">·</span>
-        <time class="clock-date" id="topbar-date"></time>
-      ` : ""}
-    </div>
-    <div class="topbar-controls">
-      ${settings.ai.enabled && settings.ai.geminiKey ? `
-        <button class="topbar-icon-btn" id="nt-ai-btn" aria-label="Open AI assistant" title="AI assistant">
-          ${svgIcon("sparkles", 16)}
-        </button>
-      ` : ""}
-      <button class="topbar-icon-btn" id="nt-settings-btn" aria-label="Settings">
-        ${svgIcon("settings", 16)}
+  clock.innerHTML = settings.appearance.showClock ? `
+    <time class="clock-time" id="topbar-time" aria-live="off" aria-atomic="true"></time>
+    <time class="clock-date" id="topbar-date"></time>
+  ` : "";
+
+  const aiOn = settings.ai.enabled && settings.ai.geminiKey;
+  controls.innerHTML = `
+    ${aiOn ? `
+      <button class="topbar-ai-btn" id="nt-ai-btn" aria-label="Open AI assistant" aria-pressed="${uiStore.get().aiActive}" title="AI assistant (${navigator.platform.toUpperCase().includes("MAC") ? "⌘" : "Ctrl+"}/)">
+        ${svgIcon("sparkles", 14)}<span>Ask AI</span>
       </button>
-    </div>
+    ` : ""}
+    <button class="topbar-icon-btn" id="nt-settings-btn" aria-label="Settings" title="Settings">
+      ${svgIcon("settings", 16)}
+    </button>
   `;
 
   clearInterval(clockTimer);
   clockTimer = undefined;
   if (settings.appearance.showClock) {
-    prevClockChars = [];
     updateClock();
-    clockTimer = setInterval(updateClock, 1000);
+    clockTimer = setInterval(updateClock, 15_000);
   }
 
   $("#nt-settings-btn")?.addEventListener("click", () => {
@@ -60,32 +56,15 @@ function updateClock() {
 
   if (timeEl) {
     let h = now.getHours();
-    const ampm = clockIs24 ? "" : h >= 12 ? " PM" : " AM";
+    const suffix = clockIs24 ? "" : h >= 12 ? " PM" : " AM";
     if (!clockIs24) h = h % 12 || 12;
-    const timeStr = `${pad(h)}:${pad(now.getMinutes())}:${pad(now.getSeconds())}${ampm}`;
-
-    const chars = timeStr.split("");
-    const prevLen = prevClockChars.length;
-
-    let html = "";
-    chars.forEach((ch, i) => {
-      const changed = prevLen > 0 && i < prevLen && ch !== prevClockChars[i];
-      const cls = changed ? "clock-digit is-changed" : "clock-digit";
-      html += `<span class="${cls}">${ch === " " ? "\u00a0" : ch}</span>`;
-    });
-    timeEl.innerHTML = html;
-    prevClockChars = chars;
-
-    setTimeout(() => {
-      timeEl.querySelectorAll(".is-changed").forEach((el) => {
-        el.classList.remove("is-changed");
-      });
-    }, 260);
+    const text = `${clockIs24 ? pad(h) : h}:${pad(now.getMinutes())}${suffix}`;
+    if (timeEl.textContent !== text) timeEl.textContent = text;
   }
 
   if (dateEl) {
     dateEl.textContent = now.toLocaleDateString("en-US", {
-      weekday: "short",
+      weekday: "long",
       month: "short",
       day: "numeric",
     });

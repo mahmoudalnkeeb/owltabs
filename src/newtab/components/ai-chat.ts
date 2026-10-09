@@ -12,7 +12,9 @@ import { setArticleSaved } from "../services/saved";
 import { relativeTime, SEARCH_ENGINES } from "../services/rss";
 import { resolveFavicons, getDomain } from "../services/favicon";
 import { $, svgIcon, escapeHtml, showToast } from "../utils";
-import { renderCard } from "./card-renderer";
+import { handleThumbErrors, renderRow } from "./article-row";
+import { markRead } from "../services/read";
+import { readStore } from "../state/store";
 import { marked } from "marked";
 import DOMPurify from "dompurify";
 
@@ -58,17 +60,14 @@ export function initAIChat(container: HTMLElement) {
   containerRef = container;
   container.innerHTML = `
     <header class="ai-chat-top">
-      <div class="ai-chat-top-inner">
-        <div class="ai-chat-pills" id="nt-ai-pills" role="tablist" aria-label="Search mode">
-          <button class="pill" role="tab" data-mode="web" aria-selected="false">Web</button>
-          <button class="pill" role="tab" data-mode="feed" aria-selected="false">Feed</button>
-          <button class="pill active" role="tab" data-mode="ai" aria-selected="true">AI</button>
-        </div>
-        <button class="ai-chat-clear" id="nt-ai-clear" aria-label="Clear AI conversation">
-          ${svgIcon("trash", 13)}
-          <span>Clear</span>
-        </button>
-      </div>
+      <h2 class="ai-chat-title">${svgIcon("sparkles", 14)} AI assistant</h2>
+      <button class="ai-chat-clear" id="nt-ai-clear" aria-label="Start a new conversation" title="New conversation">
+        ${svgIcon("trash", 13)}
+        <span>New chat</span>
+      </button>
+      <button class="nt-icon-btn" id="nt-ai-close" aria-label="Close AI assistant" title="Close (Esc)">
+        ${svgIcon("close", 16)}
+      </button>
     </header>
     <div class="ai-chat-body" id="nt-ai-messages" role="log" aria-live="polite"></div>
     <footer class="ai-chat-foot" id="nt-ai-foot">
@@ -77,7 +76,7 @@ export function initAIChat(container: HTMLElement) {
           class="ai-chat-input"
           id="nt-ai-input"
           rows="1"
-          placeholder="Ask anything..."
+          placeholder="Ask about your feed, or anything else…"
           aria-label="Message to AI"
         ></textarea>
         <button class="btn btn-primary btn-sm ai-chat-send" id="nt-ai-send" aria-label="Send">
@@ -86,6 +85,7 @@ export function initAIChat(container: HTMLElement) {
       </div>
     </footer>
   `;
+  handleThumbErrors(container);
 
   const input = $("#nt-ai-input") as HTMLTextAreaElement;
   const sendBtn = $("#nt-ai-send") as HTMLButtonElement;
@@ -129,20 +129,8 @@ export function initAIChat(container: HTMLElement) {
     focusAIInput();
   });
 
-  // Mode pills — dispatch clicks on real omnibox pills
-  container.querySelectorAll<HTMLButtonElement>(".ai-chat-pills .pill").forEach((pill) => {
-    pill.addEventListener("click", () => {
-      const mode = pill.dataset.mode || "web";
-      const target = document.querySelector<HTMLButtonElement>(
-        `.omnibox .pill[data-mode="${mode}"]`,
-      );
-      target?.click();
-      if (mode !== "ai") {
-        requestAnimationFrame(() => {
-          document.getElementById("nt-search-input")?.focus();
-        });
-      }
-    });
+  $("#nt-ai-close")?.addEventListener("click", () => {
+    uiStore.set((st) => ({ ...st, aiActive: false }));
   });
 
   // Render on state changes
@@ -158,39 +146,23 @@ function forceRender() {
 // Called by omnibox when Enter is pressed in AI mode (first query)
 export function triggerAI(query: string) {
   uiStore.set((s) => ({ ...s, aiActive: true }));
-  syncOmniboxMode("ai");
   focusAIInput();
   sendToAI(query);
 }
 
 export function openAIChat() {
   uiStore.set((s) => ({ ...s, aiActive: true }));
-  syncOmniboxMode("ai");
   focusAIInput();
 }
 
 export function toggleAIChat() {
   uiStore.set((s) => ({ ...s, aiActive: !s.aiActive }));
-  if (uiStore.get().aiActive) {
-    syncOmniboxMode("ai");
-    focusAIInput();
-  }
+  if (uiStore.get().aiActive) focusAIInput();
 }
 
 export function focusAIInput() {
   requestAnimationFrame(() => {
     document.getElementById("nt-ai-input")?.focus();
-  });
-}
-
-function syncOmniboxMode(modeId: string) {
-  const omnibox = document.getElementById("nt-omnibox") as HTMLElement | null;
-  if (!omnibox) return;
-  omnibox.dataset.mode = modeId;
-  omnibox.querySelectorAll<HTMLButtonElement>(".pill").forEach((pill) => {
-    const active = pill.dataset.mode === modeId;
-    pill.classList.toggle("active", active);
-    pill.setAttribute("aria-selected", String(active));
   });
 }
 
@@ -223,9 +195,8 @@ function renderAIChat(container: HTMLElement) {
   if (!hasContent) {
     messagesEl.innerHTML = `
       <div class="ai-empty-state">
-        <div class="ai-empty-kicker">${svgIcon("sparkles", 15)} OwlTabs AI</div>
-        <h1>Ask across your feed</h1>
-        <p>Summarize, compare, save, and reopen articles without leaving the new tab.</p>
+        <h3>Ask about your feed</h3>
+        <p>Summarize what's new, compare coverage, or find something you read earlier. Press <kbd>a</kbd> on any article to ask about it.</p>
         <div class="ai-quick-prompts">
           ${Object.entries(QUICK_PROMPTS)
             .map(
@@ -264,24 +235,23 @@ function renderAIChat(container: HTMLElement) {
   const wasAtBottom = isNearBottom(messagesEl);
   messagesEl.innerHTML = html;
 
-  // Wire card interactions
-  messagesEl.querySelectorAll<HTMLElement>(".feed-card-save").forEach((btn) => {
+  // Wire article row interactions
+  messagesEl.querySelectorAll<HTMLButtonElement>(".row-save").forEach((btn) => {
     btn.addEventListener("click", async (e) => {
-      e.stopPropagation();
-      const card = (e.target as HTMLElement).closest<HTMLElement>(".feed-card");
-      const id = card?.dataset.id;
-      if (!id) return;
-      const isSaved = btn.dataset.saved === "true";
-      const item = findArticle(id);
+      e.preventDefault();
+      const id = btn.closest<HTMLElement>(".row")?.dataset.id;
+      const item = id ? findArticle(id) : undefined;
       if (!item) return;
+      const isSaved = btn.dataset.saved === "true";
       await setArticleSaved(item, !isSaved);
       showToast(isSaved ? "Removed from saved" : "Saved", isSaved ? "accent" : "mint");
-      btn.dataset.saved = String(!isSaved);
     });
   });
 
-  messagesEl.querySelectorAll<HTMLAnchorElement>(".feed-card-open, .feed-card-title a").forEach((link) => {
+  messagesEl.querySelectorAll<HTMLAnchorElement>(".row-title a").forEach((link) => {
     link.addEventListener("click", (e) => {
+      const id = link.closest<HTMLElement>(".row")?.dataset.id;
+      if (id) void markRead([id]);
       if (aiSettings?.openFeedLinksIn === "same_tab") {
         e.preventDefault();
         location.href = link.href;
@@ -314,8 +284,11 @@ function renderCardGrid(ids: string[]): string {
     });
   }
 
-  const cardsHtml = matched.map((item) => renderCard(item, aiSettings!, faviconCache)).join("");
-  return `<div class="ai-block ai-block--cards"><div class="feed-grid">${cardsHtml}</div></div>`;
+  const read = readStore.get();
+  const rowsHtml = matched
+    .map((item) => renderRow(item, aiSettings, faviconCache, { read: read.has(item.id), canAsk: false }))
+    .join("");
+  return `<div class="ai-block ai-block--cards"><div class="feed-list feed-list--compact" role="list">${rowsHtml}</div></div>`;
 }
 
 async function sendToAI(query: string, displayQuery = query, loadingLabel?: string) {

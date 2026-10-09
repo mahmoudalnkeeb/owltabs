@@ -39,33 +39,52 @@ export async function renderQuickLinks(settings: SyncStorageSettings) {
         const favicon = domain ? faviconMap.get(domain) : null;
         const fallback = escapeHtml(monogram(l.label));
         const ico = favicon
-          ? `<img src="${escapeHtml(favicon)}" alt="" width="24" height="24" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'" />`
+          ? `<img src="${escapeHtml(favicon)}" alt="" width="16" height="16" loading="lazy" />`
           : "";
         // No draggable="false" — that attribute is honoured by Firefox before
         // SortableJS can intercept it, silently breaking drag there.
         return `
-    <a class="ql-tile" href="${escapeHtml(l.url)}" data-id="${escapeHtml(l.id)}">
-      <div class="ql-icon">
-        ${ico}
-        <span class="ql-icon-fallback" style="display:${favicon ? "none" : "grid"}">${fallback}</span>
-      </div>
-      <span class="ql-label">${escapeHtml(l.label)}</span>
-    </a>
+    <div class="ql-item">
+      <a class="ql-tile" href="${escapeHtml(l.url)}" data-id="${escapeHtml(l.id)}">
+        <span class="ql-icon">
+          ${ico}
+          <span class="ql-icon-fallback" style="display:${favicon ? "none" : "grid"}">${fallback}</span>
+        </span>
+        <span class="ql-label">${escapeHtml(l.label)}</span>
+      </a>
+      <button class="ql-remove" data-remove="${escapeHtml(l.id)}" aria-label="Remove ${escapeHtml(l.label)}" title="Remove">
+        ${svgIcon("close", 11)}
+      </button>
+    </div>
   `;
       })
       .join("") +
     `
     <button class="ql-tile ql-add" id="nt-ql-add" aria-label="Add quick link">
-      <div class="ql-icon ql-icon--add">
-        ${svgIcon("plus", 18)}
-      </div>
-      <span class="ql-label">Add</span>
+      <span class="ql-icon ql-icon--add">
+        ${svgIcon("plus", 14)}
+      </span>
+      <span class="ql-label">Add link</span>
     </button>
   `;
 
+  // Broken favicon: show the monogram. Inline onerror is blocked by the
+  // extension CSP, and error events don't bubble, so listen in capture phase.
+  container.addEventListener(
+    "error",
+    (e) => {
+      const img = e.target;
+      const icon = img instanceof HTMLImageElement ? img.closest(".ql-icon") : null;
+      if (!icon) return;
+      icon.querySelector<HTMLElement>(".ql-icon-fallback")?.style.setProperty("display", "grid");
+      (img as HTMLImageElement).remove();
+    },
+    { capture: true, signal },
+  );
+
   // SortableJS reorder
   sortableInstance = Sortable.create(container as HTMLElement, {
-    draggable: ".ql-tile:not(.ql-add)",
+    draggable: ".ql-item",
     animation: 150,
     // forceFallback bypasses the HTML5 Drag-and-Drop API entirely and uses
     // pointer events instead. Anchor elements fight the native DnD API
@@ -90,31 +109,32 @@ export async function renderQuickLinks(settings: SyncStorageSettings) {
     },
   });
 
-  // Right-click remove
+  async function removeLink(id: string): Promise<void> {
+    const updated = links.filter((l) => l.id !== id);
+    await storage.saveSettings({ quickLinks: updated });
+    renderQuickLinks({ ...settings, quickLinks: updated });
+    showToast("Link removed", "accent", {
+      label: "Undo",
+      onClick: async () => {
+        // Re-read so an undo doesn't clobber links changed since the removal.
+        const current = (await storage.getSettings()).quickLinks;
+        if (current.some((l) => l.id === id)) return;
+        const removed = links.find((l) => l.id === id)!;
+        const index = links.indexOf(removed);
+        const restored = [...current.slice(0, index), removed, ...current.slice(index)];
+        await storage.saveSettings({ quickLinks: restored });
+      },
+    });
+  }
+
+  // Right-click remove (the hover × does the same)
   container.addEventListener(
     "contextmenu",
-    async (e) => {
-      const tile = (e.target as HTMLElement).closest(
-        ".ql-tile[data-id]",
-      ) as HTMLElement | null;
+    (e) => {
+      const tile = (e.target as HTMLElement).closest<HTMLElement>(".ql-tile[data-id]");
       if (!tile) return;
       e.preventDefault();
-      const id = tile.dataset.id!;
-      const updated = links.filter((l) => l.id !== id);
-      await storage.saveSettings({ quickLinks: updated });
-      renderQuickLinks({ ...settings, quickLinks: updated });
-      showToast("Link removed", "accent", {
-        label: "Undo",
-        onClick: async () => {
-          // Re-read so an undo doesn't clobber links changed since the removal.
-          const current = (await storage.getSettings()).quickLinks;
-          if (current.some((l) => l.id === id)) return;
-          const removed = links.find((l) => l.id === id)!;
-          const index = links.indexOf(removed);
-          const restored = [...current.slice(0, index), removed, ...current.slice(index)];
-          await storage.saveSettings({ quickLinks: restored });
-        },
-      });
+      void removeLink(tile.dataset.id!);
     },
     { signal },
   );
@@ -124,6 +144,12 @@ export async function renderQuickLinks(settings: SyncStorageSettings) {
   container.addEventListener(
     "click",
     (e) => {
+      const remove = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-remove]");
+      if (remove) {
+        e.preventDefault();
+        void removeLink(remove.dataset.remove!);
+        return;
+      }
       const tile = (e.target as HTMLElement).closest(
         ".ql-tile[data-id]",
       ) as HTMLAnchorElement | null;
@@ -168,8 +194,8 @@ function showAddPopover(settings: SyncStorageSettings) {
   document.body.appendChild(popover);
 
   const rect = addBtn.getBoundingClientRect();
-  popover.style.left = `${rect.left}px`;
-  popover.style.top = `${rect.bottom + 8}px`;
+  popover.style.left = `${rect.left + window.scrollX}px`;
+  popover.style.top = `${rect.bottom + window.scrollY + 8}px`;
 
   const urlInput = popover.querySelector<HTMLInputElement>("#ql-add-url")!;
   const labelInput = popover.querySelector<HTMLInputElement>("#ql-add-label")!;

@@ -271,10 +271,21 @@ async function setCachedStrategy(
 // Content extraction helpers
 // ------------------------------------------------------------------
 
+// DOMParser documents are inert: nothing in them loads or runs.
 function stripHtml(html: string): string {
-  const tmp = document.createElement("div");
-  tmp.innerHTML = html;
-  return tmp.textContent || tmp.innerText || "";
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  return (doc.body.textContent || "").replace(/\s+/g, " ").trim();
+}
+
+// Some feeds double-encode titles (`&amp;#8216;`), leaving entities after XML parsing.
+function decodeEntities(text: string): string {
+  return /&(#\d+|#x[\da-f]+|\w+);/i.test(text) ? stripHtml(text) : text;
+}
+
+// Aggregators like hnrss put only link boilerplate in the description.
+function toExcerpt(contentHtml: string): string {
+  const text = stripHtml(contentHtml);
+  return /^(Article URL|Comments URL):/i.test(text) ? "" : text.slice(0, 200);
 }
 
 function sha1Like(input: string): string {
@@ -541,7 +552,7 @@ function parseRSSWithProfile(
 ): FeedItem[] {
   const items = xml.querySelectorAll("item");
   return Array.from(items).map((item) => {
-    const title = tagFirst(item, "title")?.textContent?.trim() || "";
+    const title = decodeEntities(tagFirst(item, "title")?.textContent?.trim() || "");
     const link = tagFirst(item, "link")?.textContent?.trim() || "";
     const dateRaw =
       item.querySelector("pubDate")?.textContent ||
@@ -563,7 +574,7 @@ function parseRSSWithProfile(
       feedCategory: feedConfig.category,
       title,
       url: link,
-      excerpt: stripHtml(contentHtml).slice(0, 200),
+      excerpt: toExcerpt(contentHtml),
       thumbnailUrl,
       sourceUrl: feedConfig.url,
       publishedAt: toIsoDate(dateRaw),
@@ -584,8 +595,7 @@ function parseAtomWithProfile(
 ): FeedItem[] {
   const entries = xml.querySelectorAll("entry");
   return Array.from(entries).map((entry) => {
-    const title =
-      tagFirst(entry, "title")?.textContent?.trim() || "";
+    const title = decodeEntities(tagFirst(entry, "title")?.textContent?.trim() || "");
     const linkEl =
       entry.querySelector('link[rel="alternate"]') ||
       entry.querySelector("link");
@@ -608,7 +618,7 @@ function parseAtomWithProfile(
       feedCategory: feedConfig.category,
       title,
       url: link,
-      excerpt: stripHtml(contentHtml).slice(0, 200),
+      excerpt: toExcerpt(contentHtml),
       thumbnailUrl,
       sourceUrl: feedConfig.url,
       publishedAt: toIsoDate(dateRaw),

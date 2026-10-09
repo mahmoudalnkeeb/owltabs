@@ -1,99 +1,143 @@
 /* ============================================================
-   quick-links.css — Part 4.3
+   quick-links.css — launch strip above the reader
    ============================================================ */
 
 .ql-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sp-3);
-  justify-content: center;
-  width: min(var(--omnibox-width), calc(100vw - 48px));
-  margin: 0 auto;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-8);
+}
+.ql-grid:empty {
+  display: none;
+}
+
+.ql-item {
+  position: relative;
 }
 
 .ql-tile {
-  display: flex;
-  flex-direction: column;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: var(--sp-2) var(--sp-3);
-  border-radius: var(--r-md);
-  border: none;
-  background: transparent;
-  cursor: pointer;
+  gap: var(--sp-2);
+  height: 34px;
+  box-sizing: border-box;
+  padding: 0 var(--sp-3) 0 6px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-full);
+  background: var(--surface-1);
+  color: var(--text-secondary);
+  font: 500 13px/1 var(--font-sans);
   text-decoration: none;
-  color: inherit;
-  min-width: 64px;
-  transition: background var(--dur-base) var(--ease-standard);
+  cursor: pointer;
   -webkit-user-drag: none;
+  transition:
+    background var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard),
+    color var(--dur-fast) var(--ease-standard);
 }
 .ql-tile:hover {
-  background: var(--surface-1);
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
 }
 .ql-tile:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
-  border-radius: var(--r-md);
 }
 
 .ql-icon {
-  width: var(--ql-tile-size);
-  height: var(--ql-tile-size);
-  border-radius: var(--ql-tile-radius);
-  background: var(--surface-1);
-  border: 1px solid var(--border-default);
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-full);
   display: grid;
   place-items: center;
   overflow: hidden;
-  transition: border-color var(--dur-fast);
+  background: var(--surface-2);
+  flex: 0 0 auto;
 }
-.ql-tile:hover .ql-icon {
-  border-color: var(--border-strong);
-}
-
 .ql-icon img {
-  width: 24px;
-  height: 24px;
+  width: 16px;
+  height: 16px;
   object-fit: contain;
   transition: filter var(--dur-base) var(--ease-standard);
 }
-
 .ql-icon-fallback {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 600;
+  font: 600 10px/1 var(--font-sans);
   color: var(--accent);
 }
 
 .ql-label {
-  font-size: var(--ql-label-size);
-  color: var(--text-secondary);
-  max-width: 56px;
+  max-width: 14ch;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-family: var(--font-sans);
 }
 
+/* Remove button: appears on hover/focus, sits on the chip's corner */
+.ql-remove {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-full);
+  background: var(--surface-3);
+  color: var(--text-secondary);
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(0.8);
+  transition:
+    opacity var(--dur-fast),
+    transform var(--dur-fast) var(--ease-out),
+    color var(--dur-fast),
+    border-color var(--dur-fast);
+}
+.ql-item:hover .ql-remove,
+.ql-item:focus-within .ql-remove {
+  opacity: 1;
+  transform: none;
+}
+.ql-remove:hover {
+  color: var(--red);
+  border-color: var(--red-soft);
+}
+
+.ql-add {
+  appearance: none;
+  border-style: dashed;
+  background: transparent;
+  color: var(--text-tertiary);
+}
 .ql-icon--add {
   background: transparent;
-  border-style: dashed;
-  color: var(--text-disabled);
+  color: inherit;
 }
-.ql-tile.ql-add:hover .ql-icon--add {
+.ql-add:hover {
+  border-style: solid;
   border-color: var(--accent);
   color: var(--accent);
-  border-style: solid;
+  background: transparent;
+}
+
+/* Sortable drag states */
+.sortable-ghost {
+  opacity: 0.35;
 }
 
 /* Inline add popover */
 .ql-add-popover {
   position: absolute;
-  background: var(--surface-2);
+  background: var(--surface-3);
   border: 1px solid var(--border-default);
   border-radius: var(--r-lg);
   padding: var(--sp-4);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
@@ -105,4 +149,21 @@
 }
 .ql-add-popover .field {
   background: var(--surface-1);
+}
+
+@media (max-width: 900px) {
+  .ql-grid {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin: 0 calc(var(--sp-4) * -1) var(--sp-5);
+    padding: 6px var(--sp-4);
+    scrollbar-width: none;
+  }
+  .ql-grid::-webkit-scrollbar {
+    display: none;
+  }
+  .ql-item,
+  .ql-add {
+    flex: 0 0 auto;
+  }
 }

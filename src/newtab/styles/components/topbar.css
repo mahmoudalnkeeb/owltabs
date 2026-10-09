@@ -7,47 +7,26 @@
 .topbar-clock {
   display: flex;
   align-items: baseline;
-  gap: var(--sp-2);
+  gap: var(--sp-3);
+  min-width: 0;
+  white-space: nowrap;
   user-select: none;
 }
 
 .clock-time {
-  font: 500 15px/1 var(--font-mono);
+  font: 500 17px/1 var(--font-sans);
   color: var(--text-primary);
-  letter-spacing: 0.01em;
+  letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
-  display: inline-flex;
-  align-items: baseline;
-}
-
-.clock-digit {
-  display: inline-block;
-}
-.clock-digit.is-changed {
-  animation: digitFlip 0.25s var(--ease-out);
-}
-@keyframes digitFlip {
-  0% {
-    opacity: 0.3;
-    transform: translateY(-3px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.clock-sep {
-  color: var(--text-disabled);
-  font-size: 11px;
-  line-height: 1;
 }
 
 .clock-date {
-  font: 400 11px/1 var(--font-mono);
+  font: 400 13px/1 var(--font-sans);
   color: var(--text-tertiary);
-  letter-spacing: 0.02em;
-  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 1080px) {
+  .clock-date { display: none; }
 }
 
 
@@ -66,7 +45,7 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  padding: 6px 13px 6px 10px;
+  padding: 7px 13px 7px 10px;
   border-radius: var(--r-full);
   border: 1px solid rgba(255, 199, 153, 0.2);
   background: rgba(255, 199, 153, 0.06);
@@ -97,15 +76,20 @@
 }
 
 .topbar-ai-btn svg {
-  width: 12px;
-  height: 12px;
   flex-shrink: 0;
   color: var(--accent);
-  animation: aiBreath 2.8s var(--ease-breath) infinite;
 }
-@keyframes aiBreath {
-  0%, 100% { opacity: 1;    transform: scale(1);    }
-  50%       { opacity: 0.5; transform: scale(0.84); }
+.topbar-ai-btn[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--text-on-accent);
+}
+.topbar-ai-btn[aria-pressed="true"] svg {
+  color: var(--text-on-accent);
+}
+@media (max-width: 720px) {
+  .topbar-ai-btn span { display: none; }
+  .topbar-ai-btn { padding: 7px; }
 }
 
 
@@ -153,7 +137,6 @@
 /* ─── Reduced-motion ───────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
-  .topbar-ai-btn svg  { animation: none; }
   .topbar-ai-btn,
   .topbar-icon-btn    { transition: none; }
 }
