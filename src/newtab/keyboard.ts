@@ -4,12 +4,14 @@ export interface KeyboardHandlers {
   toggleSettings: () => void;
   toggleAI: () => void;
   activateQuickLink: (index: number) => void;
+  // True while the settings drawer or AI chat covers the page.
+  isPanelOpen: () => boolean;
 }
 
 export function initKeyboard(handlers: KeyboardHandlers) {
   document.addEventListener("keydown", (e) => {
     const inInput = document.activeElement?.matches(
-      "input, textarea, [contenteditable]"
+      "input, textarea, select, [contenteditable]"
     );
 
     if (e.key === "Escape") {
@@ -31,8 +33,9 @@ export function initKeyboard(handlers: KeyboardHandlers) {
       handlers.toggleAI();
       return;
     }
-    if (!inInput) {
-      if (e.key === "/" || e.key === " ") {
+    // Space is left alone so it can scroll the page and press focused buttons.
+    if (!inInput && !handlers.isPanelOpen() && !e.metaKey && !e.ctrlKey && !e.altKey) {
+      if (e.key === "/") {
         e.preventDefault();
         handlers.focusSearch();
         return;

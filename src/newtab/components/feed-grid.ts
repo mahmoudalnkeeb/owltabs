@@ -1,6 +1,7 @@
 import type { FeedItem, SyncStorageSettings } from "../state/types";
 import { feedStore, uiStore } from "../state/store";
 import { storage } from "../services/storage";
+import { setArticleSaved } from "../services/saved";
 import { relativeTime } from "../services/rss";
 import { $, $$, escapeHtml, svgIcon, showToast } from "../utils";
 import { getDomain, resolveFavicons } from "../services/favicon";
@@ -59,14 +60,18 @@ export function renderFeedGrid() {
       </article>
     `).join("");
 
+  let renderSeq = 0;
   const render = async () => {
+    const seq = ++renderSeq;
     const items = feedStore.get();
     const { activeFilter, feedSearchQuery, feedPage } = uiStore.get();
 
     let filtered = items;
 
     if (activeFilter === "saved") {
-      filtered = items.filter((i) => i.saved);
+      // Saved tab reads storage so articles that left the feed still show.
+      filtered = (await storage.getSavedArticles()).map((i) => ({ ...i, saved: true }));
+      if (seq !== renderSeq) return;
     } else if (activeFilter !== "all") {
       filtered = items.filter((i) => i.feedCategory === activeFilter);
     }
@@ -80,7 +85,7 @@ export function renderFeedGrid() {
       );
     }
 
-    if (!items.length) {
+    if (!items.length && activeFilter !== "saved") {
       grid.innerHTML = `<div class="feed-empty">Add an RSS feed in settings to get started.</div>`;
       return;
     }
@@ -101,6 +106,7 @@ export function renderFeedGrid() {
     if (unresolved.length) {
       const resolved = await resolveFavicons(unresolved);
       resolved.forEach((url, domain) => faviconCache.set(domain, url));
+      if (seq !== renderSeq) return;
     }
 
     const cardsHtml = pageItems.map((item) => renderCard(item)).join("");
@@ -123,7 +129,16 @@ export function renderFeedGrid() {
   };
 
   feedStore.subscribe(render);
-  uiStore.subscribe(() => render());
+  // Only re-render for state the grid shows; AI streaming updates uiStore per token.
+  let last = uiStore.get();
+  uiStore.subscribe((s) => {
+    const changed =
+      s.activeFilter !== last.activeFilter ||
+      s.feedSearchQuery !== last.feedSearchQuery ||
+      s.feedPage !== last.feedPage;
+    last = s;
+    if (changed) render();
+  });
 
   grid.addEventListener("click", async (e) => {
     const target = e.target as HTMLElement;
@@ -147,16 +162,12 @@ export function renderFeedGrid() {
       const id = card?.dataset.id;
       if (!id) return;
       const isSaved = saveBtn.dataset.saved === "true";
-      if (isSaved) {
-        await storage.unsaveArticle(id);
-        showToast("Removed from saved", "accent");
-      } else {
-        const item = feedStore.get().find((i) => i.id === id);
-        if (item) {
-          await storage.saveArticle({ ...item, saved: true });
-          showToast("Saved", "mint");
-        }
-      }
+      const item =
+        feedStore.get().find((i) => i.id === id) ??
+        (await storage.getSavedArticles()).find((i) => i.id === id);
+      if (!item) return;
+      await setArticleSaved(item, !isSaved);
+      showToast(isSaved ? "Removed from saved" : "Saved", isSaved ? "accent" : "mint");
       saveBtn.dataset.saved = String(!isSaved);
       saveBtn.classList.toggle("is-saving", true);
       setTimeout(() => saveBtn.classList.remove("is-saving"), 300);

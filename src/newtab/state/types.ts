@@ -4,6 +4,7 @@ export interface FeedConfig {
   label: string;
   category: string;
   enabled: boolean;
+  /** Minutes between background refreshes; 0 = only on manual refresh. */
   refreshIntervalMins: 30 | 60 | 120 | 0;
   maxArticles?: number;
 }

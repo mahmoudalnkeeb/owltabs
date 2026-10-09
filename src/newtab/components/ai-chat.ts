@@ -8,6 +8,7 @@ import {
   type ToolCall,
 } from "../services/gemini";
 import { storage } from "../services/storage";
+import { setArticleSaved } from "../services/saved";
 import { relativeTime, SEARCH_ENGINES } from "../services/rss";
 import { resolveFavicons, getDomain } from "../services/favicon";
 import { $, svgIcon, escapeHtml, showToast } from "../utils";
@@ -21,6 +22,9 @@ let faviconCache = new Map<string, string | null>();
 let savedArticleCache = new Map<string, FeedItem>();
 let containerRef: HTMLElement | null = null;
 let requestSeq = 0;
+// Latest streamed HTML. Written straight to the DOM per token instead of
+// through uiStore, so streaming doesn't rebuild the whole chat each token.
+let streamingHtml: string | null = null;
 // Completed user/model text turns, sent with each request so follow-ups have context.
 let chatHistory: GeminiMessage[] = [];
 const MAX_HISTORY_MESSAGES = 20;
@@ -115,6 +119,7 @@ export function initAIChat(container: HTMLElement) {
     currentAbort = null;
     pendingArticleDisplays = [];
     chatHistory = [];
+    streamingHtml = null;
     uiStore.set((s) => ({
       ...s,
       aiResponseBlocks: [],
@@ -251,11 +256,12 @@ function renderAIChat(container: HTMLElement) {
     } else if (block.type === "cards" && block.cardIds) {
       html += renderCardGrid(block.cardIds);
     } else if (block.type === "streaming") {
-      html += `<div class="ai-block ai-block--text">${block.content}</div>`;
+      html += `<div class="ai-block ai-block--text ai-block--streaming">${streamingHtml ?? block.content}</div>`;
     }
   }
   html += "</div>";
 
+  const wasAtBottom = isNearBottom(messagesEl);
   messagesEl.innerHTML = html;
 
   // Wire card interactions
@@ -266,16 +272,10 @@ function renderAIChat(container: HTMLElement) {
       const id = card?.dataset.id;
       if (!id) return;
       const isSaved = btn.dataset.saved === "true";
-      if (isSaved) {
-        await storage.unsaveArticle(id);
-        showToast("Removed from saved", "accent");
-      } else {
-        const item = feedStore.get().find((i) => i.id === id);
-        if (item) {
-          await storage.saveArticle({ ...item, saved: true });
-          showToast("Saved", "mint");
-        }
-      }
+      const item = findArticle(id);
+      if (!item) return;
+      await setArticleSaved(item, !isSaved);
+      showToast(isSaved ? "Removed from saved" : "Saved", isSaved ? "accent" : "mint");
       btn.dataset.saved = String(!isSaved);
     });
   });
@@ -289,7 +289,11 @@ function renderAIChat(container: HTMLElement) {
     });
   });
 
-  messagesEl.scrollTop = messagesEl.scrollHeight;
+  if (wasAtBottom) messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function isNearBottom(el: HTMLElement): boolean {
+  return el.scrollHeight - el.scrollTop - el.clientHeight < 80;
 }
 
 function renderCardGrid(ids: string[]): string {
@@ -325,6 +329,7 @@ async function sendToAI(query: string, displayQuery = query, loadingLabel?: stri
   currentAbort = new AbortController();
   const activeRequest = ++requestSeq;
   pendingArticleDisplays = [];
+  streamingHtml = null;
 
   const existing = uiStore.get().aiResponseBlocks;
   const userBlock: AIResponseBlock = { type: "user", content: displayQuery };
@@ -338,7 +343,6 @@ async function sendToAI(query: string, displayQuery = query, loadingLabel?: stri
     aiResponseBlocks: [...existing, userBlock, chatBlock],
     aiStreaming: true,
   }));
-  forceRender();
 
   try {
     const feedLabels = feedStore.get().map((f) => f.feedLabel);
@@ -426,7 +430,6 @@ async function sendToAI(query: string, displayQuery = query, loadingLabel?: stri
         ...s,
         aiResponseBlocks: updated,
       }));
-      forceRender();
     }
   } catch (err) {
     if (activeRequest !== requestSeq || currentAbort?.signal.aborted) return;
@@ -440,14 +443,12 @@ async function sendToAI(query: string, displayQuery = query, loadingLabel?: stri
         content: `<span style="color:var(--red)">Error: ${escapeHtml(message)}</span>`,
       };
       uiStore.set((s) => ({ ...s, aiResponseBlocks: updated }));
-      forceRender();
     }
     showToast("AI request failed", "red");
   } finally {
     if (activeRequest === requestSeq) {
       currentAbort = null;
       uiStore.set((s) => ({ ...s, aiStreaming: false }));
-      forceRender();
     }
   }
 }
@@ -496,14 +497,13 @@ function renderLoadingState(label: string): string {
 }
 
 function updateStreamingBlock(html: string) {
-  const s = uiStore.get();
-  const updated = [...s.aiResponseBlocks];
-  const idx = updated.length - 1;
-  if (idx >= 0 && updated[idx].type === "streaming") {
-    updated[idx] = { type: "streaming", content: html };
-    uiStore.set((s) => ({ ...s, aiResponseBlocks: updated }));
-    forceRender();
-  }
+  streamingHtml = html;
+  const messagesEl = containerRef?.querySelector<HTMLElement>("#nt-ai-messages");
+  const blockEl = messagesEl?.querySelector<HTMLElement>(".ai-block--streaming");
+  if (!messagesEl || !blockEl) return;
+  const wasAtBottom = isNearBottom(messagesEl);
+  blockEl.innerHTML = html;
+  if (wasAtBottom) messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
 function resolveArgIds(raw: unknown): string[] {
@@ -512,12 +512,13 @@ function resolveArgIds(raw: unknown): string[] {
 }
 
 function findArticle(idOrUrl: string): FeedItem | undefined {
-  const needle = idOrUrl.trim().toLowerCase();
-  return [...feedStore.get(), ...savedArticleCache.values()].find((i) =>
-    i.id === idOrUrl ||
-    i.url === idOrUrl ||
-    i.title.toLowerCase() === needle ||
-    i.title.toLowerCase().includes(needle)
+  // Context lists ids as "ID:abc", and the model often passes them that way.
+  const key = idOrUrl.trim().replace(/^ID:\s*/i, "");
+  const needle = key.toLowerCase();
+  const all = [...feedStore.get(), ...savedArticleCache.values()];
+  return (
+    all.find((i) => i.id === key || i.url === key) ??
+    all.find((i) => i.title.toLowerCase() === needle)
   );
 }
 
@@ -537,7 +538,7 @@ async function executeToolCall(tc: ToolCall): Promise<string> {
     for (const id of ids) {
       const article = findArticle(id);
       if (article) {
-        await storage.saveArticle(article);
+        await setArticleSaved(article, true);
         saved.push(article.title);
       } else {
         notFound.push(id);
@@ -556,7 +557,7 @@ async function executeToolCall(tc: ToolCall): Promise<string> {
     for (const id of ids) {
       const article = findArticle(id);
       if (article) {
-        await storage.unsaveArticle(article.id);
+        await setArticleSaved(article, false);
         removed.push(article.title);
       } else {
         notFound.push(id);

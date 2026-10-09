@@ -25,14 +25,33 @@ export function svgIcon(name: string, size = 16): string {
   return icons[name] || "";
 }
 
-export function showToast(msg: string, kind: "mint" | "accent" | "red" = "mint") {
+export interface ToastAction {
+  label: string;
+  onClick: () => void;
+}
+
+export function showToast(
+  msg: string,
+  kind: "mint" | "accent" | "red" = "mint",
+  action?: ToastAction,
+) {
   const region = $("#toast-region");
   if (!region) return;
   const el = document.createElement("div");
   el.className = "toast";
   el.innerHTML = `<span class="toast-dot ${kind}"></span><span>${escapeHtml(msg)}</span>`;
+  if (action) {
+    const btn = document.createElement("button");
+    btn.className = "toast-action";
+    btn.textContent = action.label;
+    btn.addEventListener("click", () => {
+      el.remove();
+      action.onClick();
+    });
+    el.appendChild(btn);
+  }
   region.appendChild(el);
-  setTimeout(() => el.remove(), 3000);
+  setTimeout(() => el.remove(), action ? 6000 : 3000);
 }
 
 export { $, $$ };

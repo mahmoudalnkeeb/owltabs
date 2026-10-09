@@ -4,7 +4,7 @@ import { renderTopbar } from "./components/topbar";
 import { renderOmnibox } from "./components/omnibox";
 import { renderQuickLinks } from "./components/quick-links";
 import { renderFeedGrid, setFeedSettings } from "./components/feed-grid";
-import { renderFeedFilterbar } from "./components/feed-filterbar";
+import { renderFeedFilterbar, clearFeedSearch } from "./components/feed-filterbar";
 import { setAISettings, initAIChat, toggleAIChat } from "./components/ai-chat";
 import { renderSettingsDrawer } from "./components/settings-drawer";
 import { storage } from "./services/storage";
@@ -14,6 +14,7 @@ import {
   newestFetchedAt,
   parseStoredFeeds,
   saveParsedFeeds,
+  fillMissingThumbnails,
 } from "./services/rss";
 
 import "./styles/tokens.css";
@@ -72,23 +73,37 @@ async function mergeSavedStatus(items: FeedItem[]) {
   }));
 }
 
+let parseSeq = 0;
+
 async function loadAndParseFeeds(settings: Awaited<ReturnType<typeof storage.getSettings>>) {
+  const seq = ++parseSeq;
   const items = await parseStoredFeeds(settings.feedsConfig);
+  if (seq !== parseSeq) return;
   if (items.length) {
     await saveParsedFeeds(items);
     const merged = await mergeSavedStatus(items);
     feedStore.set(() => merged);
+
+    // Scrape missing thumbnails after rendering instead of blocking on it.
+    void fillMissingThumbnails(items)
+      .then(async (filled) => {
+        if (!filled || seq !== parseSeq) return;
+        await saveParsedFeeds(filled);
+        const withSaved = await mergeSavedStatus(filled);
+        if (seq === parseSeq) feedStore.set(() => withSaved);
+      })
+      .catch((err) => console.error("Thumbnail fill failed:", err));
   } else {
     // No feeds configured or no raw data yet — clear the store
     feedStore.set(() => []);
   }
 }
 
-async function cleanupRawFeeds(feedConfigs: import("./state/types").FeedConfig[]) {
+async function cleanupRawFeeds(feedConfigs: import("./state/types").FeedConfig[]): Promise<boolean> {
   const raw = await chrome.storage?.local?.get(KEYS.RAW_FEEDS);
   const rawFeeds = raw?.[KEYS.RAW_FEEDS] as Record<string, unknown> | undefined;
-  if (!rawFeeds) return;
-  const activeIds = new Set(feedConfigs.map((f) => f.id));
+  if (!rawFeeds) return false;
+  const activeIds = new Set(feedConfigs.filter((f) => f.enabled).map((f) => f.id));
   let changed = false;
   for (const id of Object.keys(rawFeeds)) {
     if (!activeIds.has(id)) {
@@ -99,6 +114,7 @@ async function cleanupRawFeeds(feedConfigs: import("./state/types").FeedConfig[]
   if (changed) {
     await chrome.storage.local.set({ [KEYS.RAW_FEEDS]: rawFeeds });
   }
+  return changed;
 }
 
 async function init() {
@@ -142,8 +158,8 @@ async function init() {
         if (searchInput && document.activeElement === searchInput) {
           searchInput.blur();
           searchInput.value = "";
-          return;
         }
+        clearFeedSearch();
       },
       focusSearch: () => {
         const input = document.getElementById("nt-search-input") as HTMLInputElement | null;
@@ -155,6 +171,10 @@ async function init() {
       toggleAI: () => {
         if (!settings.ai.enabled || !settings.ai.geminiKey) return;
         toggleAIChat();
+      },
+      isPanelOpen: () => {
+        const { aiActive, settingsOpen } = uiStore.get();
+        return aiActive || settingsOpen;
       },
       activateQuickLink: (index: number) => {
         const links = document.querySelectorAll<HTMLAnchorElement>(".ql-tile[href]");
@@ -208,6 +228,8 @@ async function init() {
 
     // Listen for settings changes and re-render affected components
     storage.onSettingsChange(async (newSettings) => {
+      const feedsChanged =
+        JSON.stringify(newSettings.feedsConfig) !== JSON.stringify(settings.feedsConfig);
       settings = newSettings;
       applyAppearance(settings);
       renderTopbar(settings);
@@ -218,11 +240,13 @@ async function init() {
       setAISettings(settings);
       renderSettingsDrawer(settings);
 
-      // Re-parse with new feed config — drops removed feeds immediately
-      await loadAndParseFeeds(settings);
+      // Clock, accent, etc. don't touch feeds: skip the re-parse and refetch.
+      if (!feedsChanged) return;
 
-      // Clean up raw XML cache for removed feeds
-      await cleanupRawFeeds(settings.feedsConfig);
+      // Drop raw XML for removed feeds. That write fires the RAW_FEEDS listener,
+      // which re-parses, so only parse here when nothing was removed.
+      const removed = await cleanupRawFeeds(settings.feedsConfig);
+      if (!removed) await loadAndParseFeeds(settings);
 
       // Trigger background refresh so newly-added feeds are fetched
       requestRefresh().catch(() => {});

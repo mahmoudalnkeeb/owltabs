@@ -10,6 +10,18 @@ interface RawFeed {
 }
 
 const FETCH_TIMEOUT_MS = 15_000;
+const DEFAULT_INTERVAL_MINS = 30;
+// The alarm fires every 30 min, a little after the last fetch; allow for that drift.
+const DUE_SLACK_MS = 60_000;
+
+// A feed is due if it has never been fetched (or its URL changed), or its
+// refresh interval has elapsed. Interval 0 means manual refresh only.
+function isDue(feed: FeedConfig, prev: RawFeed | undefined, now: number): boolean {
+  if (!prev || prev.url !== feed.url) return true;
+  const mins = feed.refreshIntervalMins ?? DEFAULT_INTERVAL_MINS;
+  if (mins === 0) return false;
+  return now - prev.fetchedAt >= mins * 60_000 - DUE_SLACK_MS;
+}
 
 let refreshInFlight: Promise<unknown> | null = null;
 
@@ -18,7 +30,7 @@ async function getFeedsFromSettings(): Promise<FeedConfig[]> {
   return settings.feedsConfig.filter((f) => f.enabled);
 }
 
-async function refreshAllFeeds() {
+async function refreshAllFeeds(force = false) {
   if (refreshInFlight) return refreshInFlight;
   refreshInFlight = (async () => {
     try {
@@ -26,8 +38,14 @@ async function refreshAllFeeds() {
       const stored = await chrome.storage.local.get(KEYS.RAW_FEEDS);
       const previous = (stored[KEYS.RAW_FEEDS] ?? {}) as Record<string, RawFeed>;
       const rawFeeds: Record<string, RawFeed> = {};
+      const now = Date.now();
       await Promise.all(
         feeds.map(async (feed) => {
+          const prev = previous[feed.id];
+          if (!force && !isDue(feed, prev, now)) {
+            rawFeeds[feed.id] = prev;
+            return;
+          }
           try {
             const res = await fetch(feed.url, {
               cache: "no-cache",
@@ -39,7 +57,6 @@ async function refreshAllFeeds() {
           } catch (err) {
             console.error(`Failed to fetch feed ${feed.url}:`, err);
             // Keep the last good copy so a transient failure doesn't empty the feed.
-            const prev = previous[feed.id];
             if (prev && prev.url === feed.url) rawFeeds[feed.id] = prev;
           }
         }),
@@ -62,7 +79,7 @@ chrome.runtime.onStartup.addListener(() => {
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse): boolean => {
   if (msg.type === "refreshFeeds") {
-    refreshAllFeeds()
+    refreshAllFeeds(msg.force === true)
       .then(() => sendResponse({ ok: true }))
       .catch((err) => sendResponse({ ok: false, error: String(err) }));
     return true;
@@ -70,7 +87,11 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse): boolean => {
   return false;
 });
 
-chrome.alarms.create("refreshFeeds", { periodInMinutes: 30 });
+// Top-level code runs on every service-worker wake; recreating the alarm
+// would restart its 30-minute timer each time, so only create it if missing.
+void chrome.alarms.get("refreshFeeds").then((alarm) => {
+  if (!alarm) chrome.alarms.create("refreshFeeds", { periodInMinutes: 30 });
+});
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === "refreshFeeds") refreshAllFeeds();
 });

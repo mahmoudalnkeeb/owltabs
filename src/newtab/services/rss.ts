@@ -122,6 +122,43 @@ function findProfile(name: string): StrategyProfile | undefined {
 }
 
 // ------------------------------------------------------------------
+// Namespaced element lookup. CSS selectors like "content\\:encoded" never match
+// in XML documents (selectors see the local name only), so look elements up by
+// namespace URI, falling back to the literal qualified name for feeds that
+// declare a nonstandard URI.
+// ------------------------------------------------------------------
+
+const NS = {
+  content: "http://purl.org/rss/1.0/modules/content/",
+  media: "http://search.yahoo.com/mrss/",
+  itunes: "http://www.itunes.com/dtds/podcast-1.0.dtd",
+} as const;
+
+function nsAll(el: Element, prefix: keyof typeof NS, local: string): Element[] {
+  const byNs = Array.from(el.getElementsByTagNameNS(NS[prefix], local));
+  return byNs.length ? byNs : Array.from(el.getElementsByTagName(`${prefix}:${local}`));
+}
+
+function nsFirst(el: Element, prefix: keyof typeof NS, local: string): Element | null {
+  return nsAll(el, prefix, local)[0] ?? null;
+}
+
+// Matches the qualified name exactly, so "content" won't match "media:content".
+function tagFirst(el: Element, name: string): Element | null {
+  return el.getElementsByTagName(name)[0] ?? null;
+}
+
+function mediaImage(el: Element): Element | null {
+  return (
+    nsAll(el, "media", "content").find(
+      (m) =>
+        m.getAttribute("medium") === "image" ||
+        (m.getAttribute("type") ?? "").startsWith("image"),
+    ) ?? null
+  );
+}
+
+// ------------------------------------------------------------------
 // Fast structural detection (no full parse)
 // ------------------------------------------------------------------
 
@@ -134,10 +171,10 @@ function detectRSSProfile(xml: Document): StrategyProfile {
   const item = xml.querySelector("item");
   if (!item) return RSS_PROFILES[0];
 
-  const hasContentEncoded = item.querySelector("content\\:encoded") !== null;
-  const hasEnclosure = item.querySelector("enclosure") !== null;
-  const hasMediaThumb = item.querySelector("media\\:thumbnail") !== null;
-  const hasMediaContent = item.querySelector("media\\:content") !== null;
+  const hasContentEncoded = nsFirst(item, "content", "encoded") !== null;
+  const hasEnclosure = tagFirst(item, "enclosure") !== null;
+  const hasMediaThumb = nsFirst(item, "media", "thumbnail") !== null;
+  const hasMediaContent = nsFirst(item, "media", "content") !== null;
 
   if (hasContentEncoded && (hasEnclosure || hasMediaThumb || hasMediaContent))
     return RSS_PROFILES[2]; // rss-enclosure
@@ -156,11 +193,12 @@ function detectAtomProfile(xml: Document): StrategyProfile {
   const entry = xml.querySelector("entry");
   if (!entry) return ATOM_PROFILES[0];
 
-  const hasContent = entry.querySelector("content") !== null;
+  const hasContent = tagFirst(entry, "content") !== null;
   const hasEnclosure =
     entry.querySelector('link[rel="enclosure"]') !== null;
   const hasMedia =
-    entry.querySelector("media\\:thumbnail, media\\:content") !== null;
+    nsFirst(entry, "media", "thumbnail") !== null ||
+    nsFirst(entry, "media", "content") !== null;
 
   if (hasContent || hasEnclosure || hasMedia) return ATOM_PROFILES[1];
   return ATOM_PROFILES[0];
@@ -273,7 +311,7 @@ function pickContent(
 ): string {
   for (const source of order) {
     if (source === "content-encoded") {
-      const el = item.querySelector("content\\:encoded");
+      const el = nsFirst(item, "content", "encoded");
       const text = el?.textContent;
       if (text) return cdata(text);
     }
@@ -283,7 +321,7 @@ function pickContent(
       if (text) return cdata(text);
     }
     if (source === "content") {
-      const el = item.querySelector("content");
+      const el = tagFirst(item, "content");
       const text = el?.textContent;
       if (text) return cdata(text);
     }
@@ -341,39 +379,67 @@ async function getImageCache(): Promise<Record<string, string>> {
   return localGet(KEYS.ARTICLE_IMAGES, {});
 }
 
-async function setImageCacheItem(url: string, imageUrl: string): Promise<void> {
-  const cache = await getImageCache();
-  cache[url] = imageUrl;
-  await localSet(KEYS.ARTICLE_IMAGES, cache);
-}
+const IMAGE_CACHE_MAX = 500;
 
-async function fetchArticleImage(url: string): Promise<string> {
-  const cache = await getImageCache();
-  const cached = cache[url];
-  if (cached) return cached;
-
+// Returns the article's og:image (or first <img>), "" if the page has none,
+// or null on a network error/timeout so transient failures aren't cached.
+async function fetchArticleImage(url: string): Promise<string | null> {
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
     if (!res.ok) return "";
     const html = await res.text();
-    const og =
-      html.match(
-        /<meta[^>]+property\s*=\s*["']og:image["'][^>]+content\s*=\s*["']([^"']+)["']/i,
-      ) ||
-      html.match(
-        /<meta[^>]+content\s*=\s*["']([^"']+)["'][^>]+property\s*=\s*["']og:image["']/i,
-      );
-    let result = "";
-    if (og) result = resolveUrl(og[1], url);
-    if (!result) {
-      const img = html.match(/<img[^>]+src\s*=\s*["']([^"']+)["']/i);
-      if (img) result = resolveUrl(img[1], url);
-    }
-    if (result) await setImageCacheItem(url, result);
-    return result;
+    const og = extractOgImage(html);
+    if (og) return resolveUrl(og, url);
+    const img = extractFirstImg(html);
+    return img ? resolveUrl(img, url) : "";
   } catch {
-    return "";
+    return null;
   }
+}
+
+/**
+ * Fills thumbnails for items that have none by scraping article pages.
+ * Runs after the feed is rendered. Lookups (including misses) are cached,
+ * and the cache keeps only the newest IMAGE_CACHE_MAX entries.
+ * Returns the updated items, or null if nothing changed.
+ */
+export async function fillMissingThumbnails(
+  items: FeedItem[],
+): Promise<FeedItem[] | null> {
+  const missing = items.filter((i) => !i.thumbnailUrl && i.url);
+  if (!missing.length) return null;
+
+  const cache = await getImageCache();
+  const toFetch = [...new Set(missing.map((i) => i.url))].filter(
+    (url) => !(url in cache),
+  );
+  for (let i = 0; i < toFetch.length; i += 3) {
+    const batch = toFetch.slice(i, i + 3);
+    const images = await Promise.all(batch.map(fetchArticleImage));
+    batch.forEach((url, j) => {
+      if (images[j] !== null) cache[url] = images[j];
+    });
+  }
+  if (toFetch.length) {
+    const entries = Object.entries(cache);
+    await localSet(
+      KEYS.ARTICLE_IMAGES,
+      Object.fromEntries(entries.slice(-IMAGE_CACHE_MAX)),
+    );
+  }
+
+  // Skip images shared by several articles (usually a site logo).
+  const seen = new Set<string>();
+  let changed = false;
+  const updated = items.map((item) => {
+    if (item.thumbnailUrl || !item.url) return item;
+    const img = cache[item.url];
+    if (!img || seen.has(img)) return item;
+    seen.add(img);
+    changed = true;
+    return { ...item, thumbnailUrl: img };
+  });
+  return changed ? updated : null;
 }
 
 function extractThumbnail(
@@ -389,19 +455,17 @@ function extractThumbnail(
       if (url) return resolveUrl(url, link);
     }
     if (method === "media-thumb") {
-      const el = item.querySelector("media\\:thumbnail, thumbnail");
+      const el = nsFirst(item, "media", "thumbnail");
       const url = el?.getAttribute("url");
       if (url) return resolveUrl(url, link);
     }
     if (method === "media-content") {
-      const el = item.querySelector(
-        'media\\:content[medium="image"], media\\:content[type^="image"]',
-      );
+      const el = mediaImage(item);
       const url = el?.getAttribute("url");
       if (url) return resolveUrl(url, link);
     }
     if (method === "itunes") {
-      const el = item.querySelector("itunes\\:image, image");
+      const el = nsFirst(item, "itunes", "image") ?? tagFirst(item, "image");
       const url =
         el?.getAttribute("href") || el?.getAttribute("url");
       if (url) return resolveUrl(url, link);
@@ -439,19 +503,17 @@ function extractThumbnailAtom(
       if (url) return resolveUrl(url, link);
     }
     if (method === "media-thumb") {
-      const el = entry.querySelector("media\\:thumbnail, thumbnail");
+      const el = nsFirst(entry, "media", "thumbnail");
       const url = el?.getAttribute("url");
       if (url) return resolveUrl(url, link);
     }
     if (method === "media-content") {
-      const el = entry.querySelector(
-        'media\\:content[medium="image"], media\\:content[type^="image"]',
-      );
+      const el = mediaImage(entry);
       const url = el?.getAttribute("url");
       if (url) return resolveUrl(url, link);
     }
     if (method === "itunes") {
-      const el = entry.querySelector("itunes\\:image, image");
+      const el = nsFirst(entry, "itunes", "image") ?? tagFirst(entry, "image");
       const url =
         el?.getAttribute("href") || el?.getAttribute("url");
       if (url) return resolveUrl(url, link);
@@ -479,8 +541,8 @@ function parseRSSWithProfile(
 ): FeedItem[] {
   const items = xml.querySelectorAll("item");
   return Array.from(items).map((item) => {
-    const title = item.querySelector("title")?.textContent?.trim() || "";
-    const link = item.querySelector("link")?.textContent?.trim() || "";
+    const title = tagFirst(item, "title")?.textContent?.trim() || "";
+    const link = tagFirst(item, "link")?.textContent?.trim() || "";
     const dateRaw =
       item.querySelector("pubDate")?.textContent ||
       item.getElementsByTagName("dc:date")[0]?.textContent ||
@@ -523,7 +585,7 @@ function parseAtomWithProfile(
   const entries = xml.querySelectorAll("entry");
   return Array.from(entries).map((entry) => {
     const title =
-      entry.querySelector("title")?.textContent?.trim() || "";
+      tagFirst(entry, "title")?.textContent?.trim() || "";
     const linkEl =
       entry.querySelector('link[rel="alternate"]') ||
       entry.querySelector("link");
@@ -606,12 +668,14 @@ async function parseWithStrategy(
 // Public API
 // ------------------------------------------------------------------
 
-export async function requestRefresh(): Promise<boolean> {
+/** Asks the worker to refresh due feeds; `force` refetches every feed. */
+export async function requestRefresh(force = false): Promise<boolean> {
   if (typeof chrome === "undefined" || !chrome.runtime?.sendMessage)
     return false;
   try {
     const resp = await chrome.runtime.sendMessage({
       type: "refreshFeeds",
+      force,
     });
     return !!resp?.ok;
   } catch {
@@ -657,7 +721,7 @@ export async function parseStoredFeeds(
   const allItems: FeedItem[] = [];
   for (const [feedId, data] of Object.entries(rawFeeds)) {
     const feedConfig = feedConfigs.find((f) => f.id === feedId);
-    if (!feedConfig) continue;
+    if (!feedConfig?.enabled) continue;
     try {
       const xml = new DOMParser().parseFromString(data.xml, "text/xml");
       const items = await parseWithStrategy(xml, feedConfig);
@@ -672,24 +736,6 @@ export async function parseStoredFeeds(
       (new Date(b.publishedAt).getTime() || 0) -
       (new Date(a.publishedAt).getTime() || 0),
   );
-
-  // Fetch article images for items missing thumbnails
-  const missingThumbnail = allItems.filter((i) => !i.thumbnailUrl && i.url);
-  if (missingThumbnail.length > 0) {
-    const seen = new Set<string>();
-    for (let i = 0; i < missingThumbnail.length; i += 3) {
-      const batch = missingThumbnail.slice(i, i + 3);
-      const images = await Promise.all(
-        batch.map((item) => fetchArticleImage(item.url)),
-      );
-      for (let j = 0; j < batch.length; j++) {
-        if (images[j] && !seen.has(images[j])) {
-          seen.add(images[j]);
-          batch[j].thumbnailUrl = images[j];
-        }
-      }
-    }
-  }
 
   return allItems;
 }

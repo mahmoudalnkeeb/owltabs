@@ -103,7 +103,18 @@ export async function renderQuickLinks(settings: SyncStorageSettings) {
       const updated = links.filter((l) => l.id !== id);
       await storage.saveSettings({ quickLinks: updated });
       renderQuickLinks({ ...settings, quickLinks: updated });
-      showToast("Link removed", "accent");
+      showToast("Link removed", "accent", {
+        label: "Undo",
+        onClick: async () => {
+          // Re-read so an undo doesn't clobber links changed since the removal.
+          const current = (await storage.getSettings()).quickLinks;
+          if (current.some((l) => l.id === id)) return;
+          const removed = links.find((l) => l.id === id)!;
+          const index = links.indexOf(removed);
+          const restored = [...current.slice(0, index), removed, ...current.slice(index)];
+          await storage.saveSettings({ quickLinks: restored });
+        },
+      });
     },
     { signal },
   );
@@ -162,14 +173,30 @@ function showAddPopover(settings: SyncStorageSettings) {
 
   const urlInput = popover.querySelector<HTMLInputElement>("#ql-add-url")!;
   const labelInput = popover.querySelector<HTMLInputElement>("#ql-add-label")!;
+  const saveBtn = popover.querySelector<HTMLButtonElement>("#ql-add-save")!;
   urlInput.focus();
 
-  popover.querySelector("#ql-add-cancel")?.addEventListener("click", () => {
+  const close = () => {
     popover?.remove();
     popover = null;
+    document.removeEventListener("click", closeOnClick);
+  };
+
+  popover.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      saveBtn.click();
+    } else if (e.key === "Escape") {
+      // Keep the global Escape handler from also acting on this keypress.
+      e.stopPropagation();
+      close();
+      (addBtn as HTMLElement).focus();
+    }
   });
 
-  popover.querySelector("#ql-add-save")?.addEventListener("click", async () => {
+  popover.querySelector("#ql-add-cancel")?.addEventListener("click", close);
+
+  saveBtn.addEventListener("click", async () => {
     let url = urlInput.value.trim();
     const label = labelInput.value.trim();
     if (!url || !label) return;
@@ -182,18 +209,13 @@ function showAddPopover(settings: SyncStorageSettings) {
     const updated = [...settings.quickLinks, newLink];
     await storage.saveSettings({ quickLinks: updated });
     renderQuickLinks({ ...settings, quickLinks: updated });
-    popover?.remove();
-    popover = null;
+    close();
     showToast("Link added", "mint");
   });
 
   // Close on outside click
-  const closeOnClick = (e: MouseEvent) => {
-    if (!popover?.contains(e.target as Node) && e.target !== addBtn) {
-      popover?.remove();
-      popover = null;
-      document.removeEventListener("click", closeOnClick);
-    }
-  };
+  function closeOnClick(e: MouseEvent) {
+    if (!popover?.contains(e.target as Node) && e.target !== addBtn) close();
+  }
   setTimeout(() => document.addEventListener("click", closeOnClick), 10);
 }

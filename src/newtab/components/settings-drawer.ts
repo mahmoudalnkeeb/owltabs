@@ -213,7 +213,6 @@ async function saveField(key: string, value: any) {
   await storage.saveSettings(patch);
   currentSettings = await storage.getSettings();
   applyAppearance();
-  navigateToMain();
   showToast("Saved", "mint");
 }
 
@@ -320,7 +319,13 @@ function initField(f: FieldDef): void {
   }
 }
 
+// Section currently open in the drawer; kept across re-renders so a save
+// doesn't kick the user back to the section list.
+let activeSection: string | null = null;
+let subscribed = false;
+
 function navigateToMain() {
+  activeSection = null;
   const body = $("#nt-settings-body") as HTMLElement | null;
   if (!body) return;
   document
@@ -340,6 +345,10 @@ function navigateToSection(id: string) {
   if (!def) return;
   const body = $("#nt-settings-body") as HTMLElement | null;
   if (!body) return;
+  activeSection = id;
+  document
+    .querySelectorAll<HTMLElement>(".settings-navitem")
+    .forEach((b) => b.classList.toggle("active", b.dataset.section === id));
 
   let html = '<div class="settings-section active">';
 
@@ -363,6 +372,17 @@ export function renderSettingsDrawer(settings: SyncStorageSettings) {
   currentSettings = settings;
   const drawer = $("#nt-settings") as HTMLElement;
   if (!drawer) return;
+
+  // Already built: only refresh the open section, keeping its scroll position.
+  if (drawer.querySelector("#nt-settings-body")) {
+    if (activeSection) {
+      const body = $("#nt-settings-body") as HTMLElement;
+      const scroll = body.scrollTop;
+      navigateToSection(activeSection);
+      body.scrollTop = scroll;
+    }
+    return;
+  }
 
   drawer.innerHTML = `
     <header class="settings-header">
@@ -391,19 +411,18 @@ export function renderSettingsDrawer(settings: SyncStorageSettings) {
     .querySelectorAll<HTMLButtonElement>(".settings-navitem")
     .forEach((btn) => {
       btn.addEventListener("click", () => {
-        drawer
-          .querySelectorAll(".settings-navitem")
-          .forEach((b) => b.classList.remove("active"));
-        btn.classList.add("active");
         navigateToSection(btn.dataset.section || "search");
       });
     });
 
-  uiStore.subscribe((s) => {
-    drawer.classList.toggle("is-open", s.settingsOpen);
-    drawer.hidden = false;
-    updateBackdrop();
-  });
+  if (!subscribed) {
+    subscribed = true;
+    uiStore.subscribe((s) => {
+      drawer.classList.toggle("is-open", s.settingsOpen);
+      drawer.hidden = false;
+      updateBackdrop();
+    });
+  }
 
   navigateToMain();
 }
@@ -457,7 +476,6 @@ function initQuickLinksCustom() {
     ];
     await storage.saveSettings({ quickLinks: updated });
     currentSettings = await storage.getSettings();
-    navigateToMain();
     showToast("Link added", "mint");
   });
 
@@ -469,13 +487,19 @@ function initQuickLinksCustom() {
         const updated = currentSettings.quickLinks.filter((l) => l.id !== id);
         await storage.saveSettings({ quickLinks: updated });
         currentSettings = await storage.getSettings();
-        navigateToMain();
         showToast("Link removed", "accent");
       });
     });
 }
 
 // ── Custom: RSS Feeds ──
+
+const REFRESH_INTERVALS: [FeedConfig["refreshIntervalMins"], string][] = [
+  [30, "30 min"],
+  [60, "1 hour"],
+  [120, "2 hours"],
+  [0, "Manual"],
+];
 
 function renderFeedsCustom(): string {
   const feeds = currentSettings.feedsConfig;
@@ -493,6 +517,13 @@ function renderFeedsCustom(): string {
             Max
             <input type="number" class="field" data-action="max-articles" data-id="${escapeHtml(f.id)}" value="${f.maxArticles ?? 20}" min="1" max="200" style="width:56px;padding:2px 6px;font-size:12px" />
           </label>
+          <select class="field" data-action="feed-interval" data-id="${escapeHtml(f.id)}" aria-label="Refresh interval" style="width:auto;padding:2px 6px;font-size:12px">
+            ${REFRESH_INTERVALS.map(
+              ([mins, label]) =>
+                `<option value="${mins}" ${(f.refreshIntervalMins ?? 30) === mins ? "selected" : ""}>${label}</option>`,
+            ).join("")}
+          </select>
+          <input type="checkbox" class="toggle-switch" data-action="toggle-feed" data-id="${escapeHtml(f.id)}" aria-label="Enable ${escapeHtml(f.label)}" ${f.enabled ? "checked" : ""} />
           <button class="mini-btn danger" data-action="remove-feed" data-id="${escapeHtml(f.id)}">
             ${svgIcon("trash", 14)}
           </button>
@@ -573,10 +604,21 @@ function initFeedsCustom() {
     const urlEl = $("#feed-settings-url") as HTMLInputElement;
     const labelEl = $("#feed-settings-label") as HTMLInputElement;
     const catEl = $("#feed-settings-category") as HTMLInputElement;
-    const url = urlEl.value.trim();
-    const label = labelEl.value.trim() || new URL(url).hostname;
+    let url = urlEl.value.trim();
+    if (!url) {
+      showToast("Enter a feed URL", "red");
+      return;
+    }
+    if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+    let hostname: string;
+    try {
+      hostname = new URL(url).hostname;
+    } catch {
+      showToast("Invalid feed URL", "red");
+      return;
+    }
+    const label = labelEl.value.trim() || hostname;
     const category = catEl.value.trim() || "general";
-    if (!url) return;
     await addFeed({
       id: `feed-${Date.now()}`,
       url,
@@ -596,8 +638,34 @@ function initFeedsCustom() {
         const updated = currentSettings.feedsConfig.filter((f) => f.id !== id);
         await storage.saveSettings({ feedsConfig: updated });
         currentSettings = await storage.getSettings();
-        navigateToMain();
         showToast("Feed removed", "accent");
+      });
+    });
+
+  document
+    .querySelectorAll<HTMLSelectElement>("[data-action='feed-interval']")
+    .forEach((select) => {
+      select.addEventListener("change", async () => {
+        const id = select.dataset.id!;
+        const mins = Number(select.value) as FeedConfig["refreshIntervalMins"];
+        const updated = currentSettings.feedsConfig.map((f) =>
+          f.id === id ? { ...f, refreshIntervalMins: mins } : f,
+        );
+        await storage.saveSettings({ feedsConfig: updated });
+        currentSettings = await storage.getSettings();
+      });
+    });
+
+  document
+    .querySelectorAll<HTMLInputElement>("[data-action='toggle-feed']")
+    .forEach((input) => {
+      input.addEventListener("change", async () => {
+        const id = input.dataset.id!;
+        const updated = currentSettings.feedsConfig.map((f) =>
+          f.id === id ? { ...f, enabled: input.checked } : f,
+        );
+        await storage.saveSettings({ feedsConfig: updated });
+        currentSettings = await storage.getSettings();
       });
     });
 
@@ -627,7 +695,6 @@ async function addFeed(feed: FeedConfig) {
   const updated = [...currentSettings.feedsConfig, feed];
   await storage.saveSettings({ feedsConfig: updated });
   currentSettings = await storage.getSettings();
-  navigateToMain();
   showToast("Feed added", "mint");
 }
 
@@ -666,7 +733,6 @@ function initAICustom() {
       ai: { ...currentSettings.ai, geminiKey: keyInput.value.trim() },
     });
     currentSettings = await storage.getSettings();
-    navigateToMain();
     showToast("API key saved", "mint");
   });
 
@@ -739,7 +805,6 @@ function initAppearanceCustom() {
       await storage.saveSettings(patch);
       currentSettings = await storage.getSettings();
       applyAccent();
-      navigateToMain();
       showToast("Accent updated", "mint");
     });
   });
@@ -750,7 +815,6 @@ function initAppearanceCustom() {
     await storage.saveSettings(patch);
     currentSettings = await storage.getSettings();
     applyAccent();
-    navigateToMain();
     showToast("Accent updated", "mint");
   });
 }

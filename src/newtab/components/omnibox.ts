@@ -3,6 +3,7 @@ import { SEARCH_ENGINES } from "../services/rss";
 import { uiStore, feedStore } from "../state/store";
 import { $, svgIcon, showToast } from "../utils";
 import { focusAIInput, triggerAI } from "./ai-chat";
+import { clearFeedSearch } from "./feed-filterbar";
 
 interface SearchMode {
   id: string;
@@ -55,8 +56,9 @@ const SEARCH_MODES: SearchMode[] = [
 ];
 
 export function renderOmnibox(settings: SyncStorageSettings) {
-  const container = $("#nt-omnibox") as HTMLElement | null;
-  if (!container) return;
+  const found = $("#nt-omnibox") as HTMLElement | null;
+  if (!found) return;
+  const container: HTMLElement = found;
 
   container.innerHTML = `
     <div class="omnibox-row">
@@ -140,6 +142,7 @@ export function renderOmnibox(settings: SyncStorageSettings) {
   });
 
   input.addEventListener("keydown", (e) => {
+    // Shift+Tab cycles search modes while the search input is focused.
     if (e.shiftKey && e.key === "Tab") {
       e.preventDefault();
       const currentMode = container.dataset.mode || SEARCH_MODES[0].id;
@@ -153,7 +156,10 @@ export function renderOmnibox(settings: SyncStorageSettings) {
       e.preventDefault();
       const modeId = container.dataset.mode || SEARCH_MODES[0].id;
       const query = input.value.trim();
-      if (!query) return;
+      if (!query) {
+        if (modeId === "feed") clearFeedSearch();
+        return;
+      }
       const mode = SEARCH_MODES.find((m) => m.id === modeId);
       if (mode) mode.onEnter(query, settings);
       input.blur();

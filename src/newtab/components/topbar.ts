@@ -5,6 +5,7 @@ import { toggleAIChat } from "./ai-chat";
 
 let clockIs24 = false;
 let prevClockChars: string[] = [];
+let clockTimer: ReturnType<typeof setInterval> | undefined;
 
 export function renderTopbar(settings: SyncStorageSettings) {
   clockIs24 = settings.appearance.clockFormat === "24";
@@ -31,10 +32,12 @@ export function renderTopbar(settings: SyncStorageSettings) {
     </div>
   `;
 
+  clearInterval(clockTimer);
+  clockTimer = undefined;
   if (settings.appearance.showClock) {
     prevClockChars = [];
     updateClock();
-    setInterval(updateClock, 1000);
+    clockTimer = setInterval(updateClock, 1000);
   }
 
   $("#nt-settings-btn")?.addEventListener("click", () => {
