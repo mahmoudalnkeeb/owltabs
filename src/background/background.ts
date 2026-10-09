@@ -3,6 +3,14 @@ import type { FeedConfig } from "../newtab/state/types";
 
 import { KEYS } from "../newtab/services/keys";
 
+interface RawFeed {
+  url: string;
+  xml: string;
+  fetchedAt: number;
+}
+
+const FETCH_TIMEOUT_MS = 15_000;
+
 let refreshInFlight: Promise<unknown> | null = null;
 
 async function getFeedsFromSettings(): Promise<FeedConfig[]> {
@@ -15,16 +23,27 @@ async function refreshAllFeeds() {
   refreshInFlight = (async () => {
     try {
       const feeds = await getFeedsFromSettings();
-      const rawFeeds: Record<string, { url: string; xml: string; fetchedAt: number }> = {};
-      for (const feed of feeds) {
-        try {
-          const res = await fetch(feed.url, { cache: "no-cache" });
-          const xml = await res.text();
-          rawFeeds[feed.id] = { url: feed.url, xml, fetchedAt: Date.now() };
-        } catch (err) {
-          console.error(`Failed to fetch feed ${feed.url}:`, err);
-        }
-      }
+      const stored = await chrome.storage.local.get(KEYS.RAW_FEEDS);
+      const previous = (stored[KEYS.RAW_FEEDS] ?? {}) as Record<string, RawFeed>;
+      const rawFeeds: Record<string, RawFeed> = {};
+      await Promise.all(
+        feeds.map(async (feed) => {
+          try {
+            const res = await fetch(feed.url, {
+              cache: "no-cache",
+              signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const xml = await res.text();
+            rawFeeds[feed.id] = { url: feed.url, xml, fetchedAt: Date.now() };
+          } catch (err) {
+            console.error(`Failed to fetch feed ${feed.url}:`, err);
+            // Keep the last good copy so a transient failure doesn't empty the feed.
+            const prev = previous[feed.id];
+            if (prev && prev.url === feed.url) rawFeeds[feed.id] = prev;
+          }
+        }),
+      );
       await chrome.storage.local.set({ [KEYS.RAW_FEEDS]: rawFeeds });
     } finally {
       refreshInFlight = null;

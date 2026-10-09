@@ -1,4 +1,5 @@
 import type { FeedItem, LocalStorageCache, SyncStorageSettings } from "../state/types";
+import { AI_MODELS } from "../state/types";
 import { KEYS } from "./keys";
 
 export const DEFAULT_SETTINGS: SyncStorageSettings = {
@@ -15,7 +16,7 @@ export const DEFAULT_SETTINGS: SyncStorageSettings = {
   ai: {
     enabled: false,
     geminiKey: "",
-    model: "gemini-2.0-flash-lite",
+    model: "gemini-3.1-flash-lite",
     systemPrompt: "",
   },
   appearance: {
@@ -29,18 +30,73 @@ export const DEFAULT_SETTINGS: SyncStorageSettings = {
   },
 };
 
-async function syncGet<T>(key: string, fallback: T): Promise<T> {
-  const store = chrome.storage?.sync;
-  if (!store) return fallback;
-  const result = await store.get(key);
-  const value = result?.[key];
-  return value === undefined ? fallback : (value as T);
+// chrome.storage.sync caps each item at 8KB (QUOTA_BYTES_PER_ITEM) but allows
+// ~100KB total, so settings are stored as a JSON string split across chunk keys.
+const SYNC_ITEM_BYTES = 8192;
+const chunkKey = (i: number) => `${KEYS.SETTINGS_CHUNKS}_${i}`;
+const encoder = new TextEncoder();
+
+function itemBytes(key: string, value: string): number {
+  return encoder.encode(key).length + encoder.encode(JSON.stringify(value)).length;
 }
 
-async function syncSet(key: string, value: unknown): Promise<void> {
+function splitIntoChunks(json: string): string[] {
+  const chunks: string[] = [];
+  let pos = 0;
+  while (pos < json.length) {
+    const key = chunkKey(chunks.length);
+    let len = Math.min(json.length - pos, SYNC_ITEM_BYTES);
+    while (itemBytes(key, json.slice(pos, pos + len)) > SYNC_ITEM_BYTES) {
+      len = Math.floor(len * 0.8);
+    }
+    chunks.push(json.slice(pos, pos + len));
+    pos += len;
+  }
+  return chunks;
+}
+
+async function readRawSettings(): Promise<Partial<SyncStorageSettings> | undefined> {
+  const store = chrome.storage?.sync;
+  if (!store) return undefined;
+  const meta = await store.get(KEYS.SETTINGS_CHUNKS);
+  const count = meta?.[KEYS.SETTINGS_CHUNKS];
+  if (typeof count !== "number") {
+    // Not yet written in chunked form: fall back to the legacy single item.
+    const legacy = await store.get(KEYS.SETTINGS);
+    return legacy?.[KEYS.SETTINGS] as Partial<SyncStorageSettings> | undefined;
+  }
+  const keys = Array.from({ length: count }, (_, i) => chunkKey(i));
+  const parts = await store.get(keys);
+  return JSON.parse(keys.map((k) => parts[k] ?? "").join("")) as Partial<SyncStorageSettings>;
+}
+
+async function writeRawSettings(settings: SyncStorageSettings): Promise<void> {
   const store = chrome.storage?.sync;
   if (!store) return;
-  await store.set({ [key]: value });
+  const chunks = splitIntoChunks(JSON.stringify(settings));
+  const meta = await store.get(KEYS.SETTINGS_CHUNKS);
+  const prev = meta?.[KEYS.SETTINGS_CHUNKS];
+  const prevCount = typeof prev === "number" ? prev : 0;
+  const items: Record<string, unknown> = { [KEYS.SETTINGS_CHUNKS]: chunks.length };
+  chunks.forEach((c, i) => (items[chunkKey(i)] = c));
+  await store.set(items);
+  const stale: string[] = [KEYS.SETTINGS];
+  for (let i = chunks.length; i < prevCount; i++) stale.push(chunkKey(i));
+  await store.remove(stale);
+}
+
+// Fill in fields missing from older stored settings and drop retired models.
+function withDefaults(stored: Partial<SyncStorageSettings> | undefined): SyncStorageSettings {
+  const merged: SyncStorageSettings = {
+    ...DEFAULT_SETTINGS,
+    ...stored,
+    ai: { ...DEFAULT_SETTINGS.ai, ...stored?.ai },
+    appearance: { ...DEFAULT_SETTINGS.appearance, ...stored?.appearance },
+  };
+  if (!(AI_MODELS as readonly string[]).includes(merged.ai.model)) {
+    merged.ai.model = DEFAULT_SETTINGS.ai.model;
+  }
+  return merged;
 }
 
 async function localGet<T>(key: string, fallback: T): Promise<T> {
@@ -59,11 +115,11 @@ async function localSet(key: string, value: unknown): Promise<void> {
 
 export const storage = {
   async getSettings(): Promise<SyncStorageSettings> {
-    return syncGet(KEYS.SETTINGS, DEFAULT_SETTINGS);
+    return withDefaults(await readRawSettings());
   },
   async saveSettings(partial: Partial<SyncStorageSettings>): Promise<void> {
     const current = await this.getSettings();
-    await syncSet(KEYS.SETTINGS, { ...current, ...partial });
+    await writeRawSettings({ ...current, ...partial });
   },
   async getFeedCache(): Promise<LocalStorageCache | null> {
     return localGet<LocalStorageCache | null>(KEYS.FEED_CACHE, null);
@@ -88,8 +144,9 @@ export const storage = {
     if (!chrome.storage?.onChanged) return () => {};
     const listener = (changes: Record<string, chrome.storage.StorageChange>, areaName: string) => {
       if (areaName !== "sync") return;
-      if (!Object.prototype.hasOwnProperty.call(changes, KEYS.SETTINGS)) return;
-      callback(changes[KEYS.SETTINGS].newValue as SyncStorageSettings);
+      // A save writes the chunk count and chunks in one set(), so one event per save.
+      if (!Object.keys(changes).some((k) => k.startsWith(KEYS.SETTINGS_CHUNKS))) return;
+      void storage.getSettings().then(callback);
     };
     chrome.storage.onChanged.addListener(listener);
     return () => chrome.storage.onChanged.removeListener(listener);

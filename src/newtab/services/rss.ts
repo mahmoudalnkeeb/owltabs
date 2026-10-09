@@ -300,6 +300,13 @@ function pickContent(
 // Thumbnail extraction driven by profile
 // ------------------------------------------------------------------
 
+// Feeds with a missing or unparseable date get "" instead of throwing,
+// so one bad item can't drop the whole feed.
+function toIsoDate(raw: string): string {
+  const d = new Date(raw.trim());
+  return Number.isNaN(d.getTime()) ? "" : d.toISOString();
+}
+
 function extractFirstImg(html: string): string {
   if (!html) return "";
   const m = html.match(/<img[^>]+src\s*=\s*["']([^"']+)["']/i);
@@ -475,7 +482,9 @@ function parseRSSWithProfile(
     const title = item.querySelector("title")?.textContent?.trim() || "";
     const link = item.querySelector("link")?.textContent?.trim() || "";
     const dateRaw =
-      item.querySelector("pubDate")?.textContent || "";
+      item.querySelector("pubDate")?.textContent ||
+      item.getElementsByTagName("dc:date")[0]?.textContent ||
+      "";
     const contentHtml = pickContent(item, profile.contentOrder);
 
     let thumbnailUrl = extractThumbnail(
@@ -495,7 +504,7 @@ function parseRSSWithProfile(
       excerpt: stripHtml(contentHtml).slice(0, 200),
       thumbnailUrl,
       sourceUrl: feedConfig.url,
-      publishedAt: new Date(dateRaw).toISOString(),
+      publishedAt: toIsoDate(dateRaw),
       saved: false,
       savedAt: null,
     };
@@ -540,7 +549,7 @@ function parseAtomWithProfile(
       excerpt: stripHtml(contentHtml).slice(0, 200),
       thumbnailUrl,
       sourceUrl: feedConfig.url,
-      publishedAt: new Date(dateRaw).toISOString(),
+      publishedAt: toIsoDate(dateRaw),
       saved: false,
       savedAt: null,
     };
@@ -660,8 +669,8 @@ export async function parseStoredFeeds(
 
   allItems.sort(
     (a, b) =>
-      new Date(b.publishedAt).getTime() -
-      new Date(a.publishedAt).getTime(),
+      (new Date(b.publishedAt).getTime() || 0) -
+      (new Date(a.publishedAt).getTime() || 0),
   );
 
   // Fetch article images for items missing thumbnails
@@ -694,6 +703,7 @@ export async function saveParsedFeeds(
 }
 
 export function relativeTime(iso: string): string {
+  if (Number.isNaN(new Date(iso).getTime())) return "";
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60_000);
   if (mins < 1) return "just now";

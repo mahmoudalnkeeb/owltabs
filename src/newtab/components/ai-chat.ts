@@ -21,6 +21,9 @@ let faviconCache = new Map<string, string | null>();
 let savedArticleCache = new Map<string, FeedItem>();
 let containerRef: HTMLElement | null = null;
 let requestSeq = 0;
+// Completed user/model text turns, sent with each request so follow-ups have context.
+let chatHistory: GeminiMessage[] = [];
+const MAX_HISTORY_MESSAGES = 20;
 
 const QUICK_PROMPTS: Record<string, { display: string; prompt: string; loading: string }> = {
   summarize_feed: {
@@ -111,6 +114,7 @@ export function initAIChat(container: HTMLElement) {
     requestSeq++;
     currentAbort = null;
     pendingArticleDisplays = [];
+    chatHistory = [];
     uiStore.set((s) => ({
       ...s,
       aiResponseBlocks: [],
@@ -346,10 +350,8 @@ async function sendToAI(query: string, displayQuery = query, loadingLabel?: stri
       parts: [{ text: contextText }],
     };
 
-    let messages: GeminiMessage[] = [
-      contextMsg,
-      { role: "user", parts: [{ text: query }] },
-    ];
+    const userMsg: GeminiMessage = { role: "user", parts: [{ text: query }] };
+    let messages: GeminiMessage[] = [contextMsg, ...chatHistory, userMsg];
     let fullText = "";
 
     for (let round = 0; round < 5; round++) {
@@ -395,6 +397,14 @@ async function sendToAI(query: string, displayQuery = query, loadingLabel?: stri
     }
 
     if (activeRequest === requestSeq) {
+      if (fullText.trim()) {
+        chatHistory = [
+          ...chatHistory,
+          userMsg,
+          { role: "model" as const, parts: [{ text: fullText }] },
+        ].slice(-MAX_HISTORY_MESSAGES);
+      }
+
       const s = uiStore.get();
       const updated = [...s.aiResponseBlocks];
       const idx = updated.findLastIndex((block) => block.type === "streaming");
@@ -559,11 +569,29 @@ async function executeToolCall(tc: ToolCall): Promise<string> {
   }
 
   if (tc.name === "open_link") {
-    const url = String(tc.arguments.url || "");
+    // The URL comes from model output, which feed text can steer (prompt injection):
+    // only allow http(s), and ask first unless it's one of the user's own articles.
+    const raw = String(tc.arguments.url || "");
+    let parsed: URL;
+    try {
+      parsed = new URL(raw);
+    } catch {
+      return `Refused: "${raw}" is not a valid URL.`;
+    }
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return `Refused: only http and https links can be opened.`;
+    }
+    const url = parsed.href;
+    const known = [...feedStore.get(), ...savedArticleCache.values()].some(
+      (i) => i.url === raw || i.url === url,
+    );
+    if (!known && !confirm(`The assistant wants to open:\n${url}\n\nOpen it?`)) {
+      return `User declined to open ${url}.`;
+    }
     if (chrome.tabs?.create) {
       chrome.tabs.create({ url });
     } else {
-      window.open(url, "_blank");
+      window.open(url, "_blank", "noopener");
     }
     return `Opened ${url} in a new tab.`;
   }

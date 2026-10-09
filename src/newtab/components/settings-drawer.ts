@@ -1,4 +1,5 @@
 import type { SyncStorageSettings, FeedConfig } from "../state/types";
+import { AI_MODELS } from "../state/types";
 import { uiStore } from "../state/store";
 import { storage } from "../services/storage";
 import { KEYS } from "../services/keys";
@@ -106,13 +107,7 @@ const SECTIONS: Record<string, SectionDef> = {
         key: "ai.model",
         label: "Model",
         type: "radio",
-        options: [
-          { label: "gemini-3.5-flash", value: "gemini-3.5-flash" },
-          { label: "gemini-3.1-flash-lite", value: "gemini-3.1-flash-lite" },
-          { label: "gemini-2.5-pro", value: "gemini-2.5-pro" },
-          { label: "gemini-2.5-flash", value: "gemini-2.5-flash" },
-          { label: "gemini-2.5-flash-lite", value: "gemini-2.5-flash-lite" },
-        ],
+        options: AI_MODELS.map((m) => ({ label: m, value: m })),
       },
       {
         key: "ai.systemPrompt",
@@ -800,13 +795,14 @@ function initDataCustom() {
   });
 
   $("#data-reset")?.addEventListener("click", async () => {
-    if (!confirm("Reset all settings to defaults? This cannot be undone."))
+    if (
+      !confirm(
+        "Reset all settings to defaults? Saved articles are kept. This cannot be undone.",
+      )
+    )
       return;
     await chrome.storage.sync.clear();
-    await chrome.storage.local.remove([
-      KEYS.FEED_CACHE,
-      KEYS.SAVED_ARTICLES,
-    ]);
+    await chrome.storage.local.remove(KEYS.FEED_CACHE);
     location.reload();
   });
 }

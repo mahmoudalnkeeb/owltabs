@@ -7,7 +7,8 @@
 const APP_PREFIX = "owltabs";
 
 export const KEYS = {
-  SETTINGS:        `${APP_PREFIX}_settings_v2`,
+  SETTINGS:        `${APP_PREFIX}_settings_v2`, // legacy single item; read as fallback only
+  SETTINGS_CHUNKS: `${APP_PREFIX}_settings_v3`, // chunk count; chunks at `${SETTINGS_CHUNKS}_${i}`
   FEED_CACHE:      `${APP_PREFIX}_feed_cache_v2`,
   SAVED_ARTICLES:  `${APP_PREFIX}_saved_articles_v2`,
   RAW_FEEDS:       `${APP_PREFIX}_raw_feeds_v2`,

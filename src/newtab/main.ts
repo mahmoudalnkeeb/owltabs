@@ -31,6 +31,14 @@ import "./styles/components/settings-drawer.css";
 const FEED_STALE_MS = 5 * 60 * 1000;
 import { KEYS } from "./services/keys";
 import { migrateIfNeeded } from "./services/migrate";
+import { showToast } from "./utils";
+
+// Settings writes can fail (e.g. chrome.storage.sync quota). Callers don't catch,
+// so surface those failures here instead of dropping them silently.
+window.addEventListener("unhandledrejection", (e) => {
+  const msg = e.reason instanceof Error ? e.reason.message : String(e.reason);
+  if (/quota/i.test(msg)) showToast("Couldn't save settings: storage limit reached", "red");
+});
 
 function applyAppearance(settings: Awaited<ReturnType<typeof storage.getSettings>>) {
   const { appearance } = settings;
