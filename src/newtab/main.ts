@@ -119,6 +119,8 @@ async function init() {
       location.replace(`${location.pathname}?focus`);
       return;
     }
+    // The marker has done its job; keep it out of the address bar.
+    if (focusRequested) history.replaceState(null, "", location.pathname);
     applyAppearance(settings);
 
     await loadReadState();

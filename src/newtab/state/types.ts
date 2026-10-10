@@ -50,6 +50,8 @@ export interface SyncStorageSettings {
   customSearchUrl: string;
   openLinksIn: "new_tab" | "same_tab";
   openFeedLinksIn: "new_tab" | "same_tab";
+  /** Empty the search box after a search, URL open, or AI question. */
+  clearSearchOnSubmit: boolean;
   feedsConfig: FeedConfig[];
   quickLinks: QuickLink[];
   ai: AIConfig;

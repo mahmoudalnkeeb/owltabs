@@ -106,6 +106,12 @@ const SECTIONS: Record<string, SectionDef> = {
             type: "toggle",
             hint: "Chrome puts the cursor in the address bar. This reloads the page once so you can type right away; the address bar then shows the extension's URL.",
           },
+          {
+            key: "clearSearchOnSubmit",
+            label: "Clear search after submitting",
+            type: "toggle",
+            hint: "Empty the box once you search, open a URL, or ask AI.",
+          },
         ],
       },
       {

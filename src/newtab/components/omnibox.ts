@@ -18,7 +18,7 @@ const ENGINE_NAMES: Record<SyncStorageSettings["searchEngine"], string> = {
 const isMac = navigator.platform.toUpperCase().includes("MAC");
 const MOD = isMac ? "⌘" : "Ctrl";
 
-type ActionId = "web" | "ai";
+type ActionId = "open" | "web" | "ai";
 
 let settings: SyncStorageSettings;
 let built = false;
@@ -29,6 +29,33 @@ function searchWeb(query: string): void {
     : SEARCH_ENGINES[settings.searchEngine] || SEARCH_ENGINES.brave;
   const url = engine.replace("{query}", encodeURIComponent(query));
   window.open(url, settings.openLinksIn === "new_tab" ? "_blank" : "_self");
+}
+
+// Schemes typed out in full are opened as-is; javascript: and data: never match.
+const SCHEME_RE = /^(https?|ftp|file|chrome|edge|brave|about|view-source):\S+$/i;
+const HOST_RE =
+  /^(localhost|\d{1,3}(?:\.\d{1,3}){3}|(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,63})(?::\d{1,5})?(?:[/?#]\S*)?$/i;
+
+/** The URL a query points at, or null if it reads as search terms. */
+function queryToUrl(query: string): string | null {
+  if (/\s/.test(query)) return null;
+  if (SCHEME_RE.test(query)) return query;
+  const host = HOST_RE.exec(query)?.[1];
+  if (!host) return null;
+  const local = host === "localhost" || /^\d/.test(host);
+  return `${local ? "http" : "https"}://${query}`;
+}
+
+function openUrl(url: string): void {
+  const newTab = settings.openLinksIn === "new_tab";
+  // Pages can't window.open browser-internal URLs (chrome://, about:), but the tabs API can.
+  if (/^(https?|ftp):/i.test(url) || !chrome.tabs) {
+    window.open(url, newTab ? "_blank" : "_self");
+  } else if (newTab) {
+    void chrome.tabs.create({ url });
+  } else {
+    void chrome.tabs.update({ url });
+  }
 }
 
 function askAI(query: string): void {
@@ -86,7 +113,11 @@ export function renderOmnibox(next: SyncStorageSettings): void {
   let active: ActionId = "web";
   let filterTimer: ReturnType<typeof setTimeout> | undefined;
 
-  const actions = (): ActionId[] => (aiConfigured(settings) ? ["web", "ai"] : ["web"]);
+  const actions = (): ActionId[] => {
+    const list: ActionId[] = queryToUrl(input.value.trim()) ? ["open", "web"] : ["web"];
+    if (aiConfigured(settings)) list.push("ai");
+    return list;
+  };
 
   function renderMenu(): void {
     const q = input.value.trim();
@@ -96,17 +127,19 @@ export function renderOmnibox(next: SyncStorageSettings): void {
     if (!open) return;
 
     const quoted = `“${escapeHtml(q)}”`;
+    const list = actions();
     const count = feedMatchCount(q);
     const option = (id: ActionId, icon: string, label: string, key: string) => `
       <div class="omnibox-option${id === active ? " is-active" : ""}" role="option" id="nt-opt-${id}" data-action="${id}" aria-selected="${id === active}">
         <span class="omnibox-option-icon">${icon}</span>
         <span class="omnibox-option-label">${label}</span>
-        <kbd>${key}</kbd>
+        ${key ? `<kbd>${key}</kbd>` : ""}
       </div>`;
 
     menu.innerHTML = `
-      ${option("web", svgIcon("search", 14), `Search ${ENGINE_NAMES[settings.searchEngine]} for ${quoted}`, "↵")}
-      ${actions().includes("ai") ? option("ai", svgIcon("sparkles", 14), `Ask AI about ${quoted}`, `${MOD} ↵`) : ""}
+      ${list.includes("open") ? option("open", svgIcon("open-in-new", 14), `Open ${quoted}`, "↵") : ""}
+      ${option("web", svgIcon("search", 14), `Search ${ENGINE_NAMES[settings.searchEngine]} for ${quoted}`, list.includes("open") ? "⇧ ↵" : "↵")}
+      ${list.includes("ai") ? option("ai", svgIcon("sparkles", 14), `Ask AI about ${quoted}`, `${MOD} ↵`) : ""}
       <div class="omnibox-menu-note">
         ${count
           ? `${count} matching ${count === 1 ? "article" : "articles"} shown below`
@@ -119,13 +152,19 @@ export function renderOmnibox(next: SyncStorageSettings): void {
   function run(action: ActionId): void {
     const q = input.value.trim();
     if (!q) return;
-    if (action === "web") searchWeb(q);
+    if (action === "open") openUrl(queryToUrl(q) ?? q);
+    else if (action === "web") searchWeb(q);
     else askAI(q);
+    if (settings.clearSearchOnSubmit) {
+      clearTimeout(filterTimer);
+      input.value = "";
+      clearFeedSearch();
+    }
     input.blur();
   }
 
   input.addEventListener("input", () => {
-    active = "web";
+    active = actions()[0];
     renderMenu();
     clearTimeout(filterTimer);
     filterTimer = setTimeout(() => {
@@ -162,7 +201,7 @@ export function renderOmnibox(next: SyncStorageSettings): void {
     }
     if (e.key === "Enter") {
       e.preventDefault();
-      run(e.metaKey || e.ctrlKey ? "ai" : active);
+      run(e.metaKey || e.ctrlKey ? "ai" : e.shiftKey ? "web" : active);
       return;
     }
     if (e.key === "Escape") {

@@ -7,7 +7,7 @@
   "homepage_url": "https://github.com/mahmoudalnkeeb/owltabs",
   "permissions": ["storage", "alarms"],
   "host_permissions": ["*://*/*"],
-  "chrome_url_overrides": { "newtab": "src/newtab/index.html" },
+  "chrome_url_overrides": { "newtab": "newtab.html" },
   "background": {
     "service_worker": "src/background/background.ts",
     "type": "module"

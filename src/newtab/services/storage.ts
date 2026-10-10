@@ -7,6 +7,7 @@ export const DEFAULT_SETTINGS: SyncStorageSettings = {
   customSearchUrl: "",
   openLinksIn: "new_tab",
   openFeedLinksIn: "new_tab",
+  clearSearchOnSubmit: true,
   feedsConfig: [],
   quickLinks: [
     { id: "ql-01", url: "https://github.com", label: "GitHub" },
