@@ -16,5 +16,6 @@ export const KEYS = {
   ARTICLE_IMAGES:  `${APP_PREFIX}_article_images_v2`,
   FAVICON_CACHE:   `${APP_PREFIX}_favicon_cache_v2`,
   READ_ARTICLES:   `${APP_PREFIX}_read_articles_v1`,
+  SEARCH_HISTORY:  `${APP_PREFIX}_search_history_v1`,
   MIGRATED:        `${APP_PREFIX}_migrated_v1`,
 } as const;

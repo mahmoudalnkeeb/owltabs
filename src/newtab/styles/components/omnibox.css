@@ -120,6 +120,10 @@
   place-items: center;
   color: var(--text-tertiary);
 }
+.omnibox-favicon {
+  display: block;
+  border-radius: 3px;
+}
 .omnibox-option.is-active .omnibox-option-icon {
   color: var(--accent);
 }
@@ -130,11 +134,25 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.omnibox-option-url {
+  flex: 0 1 auto;
+  max-width: 40%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
 .omnibox-option kbd {
   opacity: 0;
 }
 .omnibox-option.is-active kbd {
   opacity: 1;
+}
+
+.omnibox-menu-sep {
+  margin: var(--sp-1) var(--sp-3);
+  border-top: 1px solid var(--border-subtle);
 }
 
 .omnibox-menu-note {

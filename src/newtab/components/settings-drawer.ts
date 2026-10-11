@@ -3,6 +3,7 @@ import { AI_MODELS } from "../state/types";
 import { uiStore } from "../state/store";
 import { storage } from "../services/storage";
 import { KEYS } from "../services/keys";
+import { clearHistory } from "../services/history";
 import { getDomain, resolveFavicons } from "../services/favicon";
 import { $, escapeHtml, svgIcon, showToast } from "../utils";
 
@@ -21,6 +22,10 @@ type FieldDef = {
   /** Convert the control's string value before saving (e.g. to a number). */
   parse?: (v: string) => unknown;
   visible?: (s: SyncStorageSettings) => boolean;
+  /** For toggles: runs before saving; resolving false leaves the setting off. */
+  beforeEnable?: () => Promise<boolean>;
+  /** For toggles: whether what the toggle needs is still granted; false turns it off. */
+  hasPermission?: () => Promise<boolean>;
 };
 
 type Part =
@@ -70,6 +75,8 @@ const ACCENTS: { label: string; value: string }[] = [
 
 const MAX_QUICK_LINKS = 12;
 
+const HISTORY_PERMISSION: chrome.runtime.ManifestPermission[] = ["history"];
+
 const SECTIONS: Record<string, SectionDef> = {
   general: {
     label: "General",
@@ -111,6 +118,34 @@ const SECTIONS: Record<string, SectionDef> = {
             label: "Clear search after submitting",
             type: "toggle",
             hint: "Empty the box once you search, open a URL, or ask AI.",
+          },
+          {
+            key: "searchHistory",
+            label: "Search history",
+            type: "toggle",
+            hint: "Remember searches and URLs opened from the search box, and suggest them as you type. Stored only in this browser.",
+          },
+          {
+            key: "browsingHistory",
+            label: "Browsing history",
+            type: "toggle",
+            hint: "Suggest pages you've visited in this browser as you type. Turning this on asks for permission to read your history.",
+            beforeEnable: async () => {
+              try {
+                return await chrome.permissions.request({ permissions: HISTORY_PERMISSION });
+              } catch {
+                showToast("Reload OwlTabs in chrome://extensions, then try again", "red");
+                return false;
+              }
+            },
+            hasPermission: () => chrome.permissions.contains({ permissions: HISTORY_PERMISSION }),
+          },
+          {
+            key: "searchSuggestions",
+            label: "Search engine suggestions",
+            type: "toggle",
+            hint: "Show suggestions from your search engine as you type. What you type is sent to it. Not available for custom engines.",
+            visible: (s) => s.searchEngine !== "custom",
           },
         ],
       },
@@ -368,7 +403,22 @@ function initField(f: FieldDef): void {
   const el = document.getElementById(domId(f.key)) as HTMLInputElement | null;
   if (!el) return;
   if (f.type === "toggle") {
-    el.addEventListener("change", () => void saveField(f.key, el.checked));
+    el.addEventListener("change", async () => {
+      // Permission prompts must start from the click, so this runs before any other await.
+      if (el.checked && f.beforeEnable && !(await f.beforeEnable())) {
+        el.checked = false;
+        return;
+      }
+      await saveField(f.key, el.checked);
+    });
+    // The permission can be revoked in chrome://extensions; don't show the toggle as on if it was.
+    if (el.checked && f.hasPermission) {
+      void f.hasPermission().then((ok) => {
+        if (ok) return;
+        el.checked = false;
+        void saveField(f.key, false);
+      });
+    }
   } else {
     el.addEventListener("change", () => void saveField(f.key, parse(el.value)));
   }
@@ -981,6 +1031,10 @@ function renderDataCustom(): string {
           <div class="set-control"><button class="btn btn-secondary btn-sm" id="data-export">${svgIcon("download", 13)} Export</button></div>
         </div>
         <div class="set-row">
+          ${rowText("Clear search history", "Forget searches and URLs opened from the search box.")}
+          <div class="set-control"><button class="btn btn-secondary btn-sm" id="data-clear-history">Clear history</button></div>
+        </div>
+        <div class="set-row">
           ${rowText("Clear feed cache", "Removes stored articles; feeds load fresh on the next refresh. Saved articles are kept.")}
           <div class="set-control"><button class="btn btn-secondary btn-sm" id="data-clear-cache">Clear cache</button></div>
         </div>
@@ -1009,6 +1063,11 @@ function initDataCustom() {
     a.click();
     URL.revokeObjectURL(url);
     showToast(`Exported ${saved.length} saved ${saved.length === 1 ? "article" : "articles"}`, "mint");
+  });
+
+  $("#data-clear-history")?.addEventListener("click", async () => {
+    await clearHistory();
+    showToast("Search history cleared", "mint");
   });
 
   $("#data-clear-cache")?.addEventListener("click", async () => {

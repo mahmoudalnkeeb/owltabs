@@ -6,6 +6,7 @@
   "author": "Mahmoud Alnakeeb",
   "homepage_url": "https://github.com/mahmoudalnkeeb/owltabs",
   "permissions": ["storage", "alarms"],
+  "optional_permissions": ["history"],
   "host_permissions": ["*://*/*"],
   "chrome_url_overrides": { "newtab": "newtab.html" },
   "background": {

@@ -52,6 +52,12 @@ export interface SyncStorageSettings {
   openFeedLinksIn: "new_tab" | "same_tab";
   /** Empty the search box after a search, URL open, or AI question. */
   clearSearchOnSubmit: boolean;
+  /** Record searches and opened URLs, and offer matches from them while typing. */
+  searchHistory: boolean;
+  /** Offer pages from the browser's history while typing (needs the optional "history" permission). */
+  browsingHistory: boolean;
+  /** Ask the search engine for suggestions while typing (sends keystrokes to it). */
+  searchSuggestions: boolean;
   feedsConfig: FeedConfig[];
   quickLinks: QuickLink[];
   ai: AIConfig;
