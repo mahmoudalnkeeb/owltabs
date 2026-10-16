@@ -5,7 +5,7 @@ import { escapeHtml, svgIcon, showToast } from "../utils";
 import { triggerAI } from "./ai-chat";
 import { aiConfigured } from "./article-row";
 import { clearFeedSearch, matchesFilter } from "./feed-sidebar";
-import { moveSelection } from "./feed-list";
+import { afterFilterRender, moveSelection } from "./feed-list";
 import { addHistory, loadHistory, type HistoryEntry } from "../services/history";
 import { fetchSuggestions } from "../services/suggest";
 import { getDomain, resolveFavicons } from "../services/favicon";
@@ -292,7 +292,7 @@ export function renderOmnibox(next: SyncStorageSettings): void {
       ${extrasHtml ? `<div class="omnibox-menu-sep" role="separator"></div>${extrasHtml}` : ""}
       <div class="omnibox-menu-note">
         ${count
-          ? `${count} matching ${count === 1 ? "article" : "articles"} shown below`
+          ? `${count} matching ${count === 1 ? "article" : "articles"} shown below · <kbd>Tab</kbd> to browse them, <kbd>Esc</kbd> to hide this`
           : "No matching articles in your feed"}
       </div>
     `;
@@ -354,6 +354,18 @@ export function renderOmnibox(next: SyncStorageSettings): void {
     input.setAttribute("aria-expanded", "false");
   });
 
+  /** Hands the keyboard to the filtered article list, keeping the query. */
+  async function browseResults(): Promise<void> {
+    if (filterTimer !== undefined) {
+      clearTimeout(filterTimer);
+      filterTimer = undefined;
+      uiStore.set((s) => ({ ...s, feedSearchQuery: input.value.trim() }));
+    }
+    input.blur();
+    await afterFilterRender();
+    moveSelection(1);
+  }
+
   input.addEventListener("keydown", (e) => {
     // From an empty box, ↓ hands the keyboard to the article list.
     if (e.key === "ArrowDown" && !input.value) {
@@ -362,6 +374,14 @@ export function renderOmnibox(next: SyncStorageSettings): void {
       e.stopPropagation();
       input.blur();
       moveSelection(1);
+      return;
+    }
+    const q = input.value.trim();
+    // Tab, or ↓ once the menu is dismissed, moves into the matching articles.
+    if (q && feedMatchCount(q) > 0 && ((e.key === "Tab" && !e.shiftKey) || (e.key === "ArrowDown" && menu.hidden))) {
+      e.preventDefault();
+      e.stopPropagation();
+      void browseResults();
       return;
     }
     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
@@ -387,7 +407,11 @@ export function renderOmnibox(next: SyncStorageSettings): void {
     if (e.key === "Escape") {
       // Handled here so the page-level Escape doesn't also close panels.
       e.stopPropagation();
-      if (input.value) {
+      // First Esc hides the menu and keeps the search filtering the list.
+      if (!menu.hidden) {
+        menu.hidden = true;
+        input.setAttribute("aria-expanded", "false");
+      } else if (input.value) {
         input.value = "";
         clearFeedSearch();
         renderMenu();

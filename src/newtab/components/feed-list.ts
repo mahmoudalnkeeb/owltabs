@@ -23,6 +23,8 @@ let lastMoveAt = 0;
 let listEl: HTMLElement | null = null;
 let headEl: HTMLElement | null = null;
 let renderSeq = 0;
+// The render started by the latest filter or search change.
+let filterRender: Promise<void> = Promise.resolve();
 let sentinelObserver: IntersectionObserver | null = null;
 // Items behind the current render, in display order, for keyboard navigation.
 let currentItems: FeedItem[] = [];
@@ -277,6 +279,11 @@ export function moveSelection(delta: 1 | -1, opts: { searchAtTop?: boolean } = {
   applySelection({ scroll: next !== 0 || delta > 0, focus: true, instant });
 }
 
+/** Resolves once the list shows the current filter and search. */
+export function afterFilterRender(): Promise<void> {
+  return filterRender;
+}
+
 export function hasSelection(): boolean {
   return !!rowFor(selectedId);
 }
@@ -374,7 +381,7 @@ export function renderFeedList(): void {
     if (!changed) return;
     visibleCount = BATCH;
     selectedId = null;
-    void render();
+    filterRender = render();
     if (filterChanged) list.scrollTo({ top: 0 });
   });
 
