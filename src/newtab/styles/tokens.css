@@ -29,9 +29,13 @@
 
   /* ---------- Accent / agent / write-tier (peppermint orange) ---------- */
   --accent: #ffc799;           /* 12.6:1 on surface-0 */
-  --accent-hover: #ffcfa8;
-  --accent-soft: #ffc79926;    /* 15% */
-  --accent-softer: #ffc79914;  /* 8%  */
+  /* Everything below derives from --accent, so a custom accent recolors it all */
+  --accent-hover: color-mix(in srgb, var(--accent) 85%, #ffffff);
+  --accent-soft: color-mix(in srgb, var(--accent) 15%, transparent);
+  --accent-softer: color-mix(in srgb, var(--accent) 8%, transparent);
+  --accent-border: color-mix(in srgb, var(--accent) 35%, transparent);
+  /* Tint for the animated page background */
+  --accent-glow: color-mix(in srgb, var(--accent) 9%, #0b0b0b);
 
   /* ---------- Positive / read-tier (peppermint mint) ---------- */
   --mint: #99ffe4;             /* 16.1:1 on surface-0 */
@@ -43,8 +47,8 @@
   --red-soft: #ff808026;
   --red-softer: #ff808015;
 
-  --selection: #ffffff25;
-  --focus-ring: #ffc799;
+  --selection: color-mix(in srgb, var(--accent) 30%, transparent);
+  --focus-ring: var(--accent);
 
   /* ---------- Radius ---------- */
   --r-xs: 4px;
@@ -79,8 +83,8 @@
   --dur-deliberate: 480ms;
 
   /* ---------- Typography ---------- */
-  --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --font-sans: 'Geist Variable', 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'Geist Mono Variable', 'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
   --text-display: 600 56px/1.08 var(--font-sans);
   --text-h1: 600 36px/1.15 var(--font-sans);

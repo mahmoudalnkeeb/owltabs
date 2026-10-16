@@ -10,6 +10,7 @@ import { shortcutsOpen, toggleShortcuts } from "./components/shortcuts";
 import { setAISettings, initAIChat, toggleAIChat } from "./components/ai-chat";
 import { renderSettingsDrawer } from "./components/settings-drawer";
 import { storage } from "./services/storage";
+import { FONT_STACKS } from "./fonts";
 import { feedStore, uiStore } from "./state/store";
 import {
   requestRefresh,
@@ -19,6 +20,7 @@ import {
   fillMissingThumbnails,
 } from "./services/rss";
 
+import "./fonts";
 import "./styles/tokens.css";
 import "./styles/newtab-tokens.css";
 import "./styles/ambient.css";
@@ -47,6 +49,7 @@ window.addEventListener("unhandledrejection", (e) => {
 function applyAppearance(settings: Awaited<ReturnType<typeof storage.getSettings>>) {
   const { appearance } = settings;
   document.documentElement.style.setProperty("font-size", `${appearance.fontScale * 100}%`);
+  document.documentElement.style.setProperty("--font-sans", FONT_STACKS[appearance.fontFamily]);
   if (appearance.accentColor) {
     document.documentElement.style.setProperty("--accent", appearance.accentColor);
   }

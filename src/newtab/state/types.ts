@@ -43,11 +43,16 @@ export interface AIConfig {
   systemPrompt: string;
 }
 
+/** Interface fonts, bundled with the extension; the stacks live in fonts.ts. */
+export const FONT_FAMILIES = ["geist", "inter", "plex", "atkinson", "literata", "system"] as const;
+export type FontFamily = (typeof FONT_FAMILIES)[number];
+
 export interface AppearanceConfig {
   showThumbnails: boolean;
   /** Re-open the page once so the search box gets focus instead of the address bar. */
   focusSearchOnOpen: boolean;
   fontScale: 0.9 | 1.0 | 1.1 | 1.2;
+  fontFamily: FontFamily;
   showClock: boolean;
   clockFormat: "12" | "24";
   showQuickLinks: boolean;

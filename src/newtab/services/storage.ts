@@ -1,5 +1,5 @@
 import type { FeedItem, LocalStorageCache, SyncStorageSettings } from "../state/types";
-import { AI_MODELS, AI_PROVIDERS } from "../state/types";
+import { AI_MODELS, AI_PROVIDERS, FONT_FAMILIES } from "../state/types";
 import { KEYS } from "./keys";
 
 export const DEFAULT_SETTINGS: SyncStorageSettings = {
@@ -31,6 +31,7 @@ export const DEFAULT_SETTINGS: SyncStorageSettings = {
     showThumbnails: true,
     focusSearchOnOpen: true,
     fontScale: 1.0,
+    fontFamily: "geist",
     showClock: true,
     clockFormat: "12",
     showQuickLinks: true,
@@ -104,6 +105,9 @@ function withDefaults(stored: Partial<SyncStorageSettings> | undefined): SyncSto
   };
   if (!(AI_MODELS as readonly string[]).includes(merged.ai.model)) {
     merged.ai.model = DEFAULT_SETTINGS.ai.model;
+  }
+  if (!(FONT_FAMILIES as readonly string[]).includes(merged.appearance.fontFamily)) {
+    merged.appearance.fontFamily = DEFAULT_SETTINGS.appearance.fontFamily;
   }
   if (!(AI_PROVIDERS as readonly string[]).includes(merged.ai.provider)) {
     merged.ai.provider = DEFAULT_SETTINGS.ai.provider;

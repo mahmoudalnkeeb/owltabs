@@ -25,7 +25,7 @@
 }
 .list-head-title h2 {
   margin: 0;
-  font-size: 24px;
+  font-size: 1.5rem;
   font-weight: 600;
   letter-spacing: -0.01em;
   white-space: nowrap;
@@ -33,7 +33,7 @@
   text-overflow: ellipsis;
 }
 .list-head-count {
-  font: 400 13px/1 var(--font-mono);
+  font: 400 0.8125rem/1 var(--font-mono);
   color: var(--text-tertiary);
   white-space: nowrap;
 }
@@ -80,7 +80,7 @@
 .list-group {
   margin: 0;
   padding: var(--sp-5) var(--sp-4) var(--sp-1);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--text-tertiary);
 }
@@ -123,13 +123,13 @@
 
 /* Keyboard selection: a filled, outlined row, one step above hover. No side stripe. */
 .row.is-selected {
-  background: var(--surface-2);
-  box-shadow: inset 0 0 0 1px var(--border-default);
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface-2));
+  box-shadow: inset 0 0 0 1px var(--accent-border);
 }
 
 .row-time {
   padding-top: 4px;
-  font: 400 12.5px/1.4 var(--font-mono);
+  font: 400 0.78125rem/1.4 var(--font-mono);
   color: var(--text-tertiary);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -147,7 +147,7 @@
 
 .row-title {
   margin: 0;
-  font-size: 17px;
+  font-size: 1.0625rem;
   font-weight: 600;
   line-height: 1.4;
   letter-spacing: -0.005em;
@@ -196,7 +196,7 @@
   align-items: center;
   gap: 7px;
   min-width: 0;
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   line-height: 1.4;
   color: var(--text-tertiary);
 }
@@ -337,7 +337,7 @@
   padding: var(--sp-3);
 }
 .feed-list--compact .row-title {
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 .feed-list--compact .row-time,
 .feed-list--compact .row-excerpt,
@@ -390,7 +390,7 @@
   gap: var(--sp-3);
   padding: var(--sp-10) var(--sp-3);
   color: var(--text-tertiary);
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.6;
 }
 .list-empty p {
@@ -399,7 +399,7 @@
 }
 .list-empty h3 {
   margin: 0;
-  font-size: 17px;
+  font-size: 1.0625rem;
   font-weight: 600;
   color: var(--text-primary);
 }

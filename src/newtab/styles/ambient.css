@@ -35,31 +35,31 @@
   0% {
     --amb-x:    20%;
     --amb-y:    50%;
-    --amb-warm: #1a1208;
+    --amb-warm: var(--accent-glow);
     --amb-mid:  #0e0e0e;
   }
   25% {
     --amb-x:    72%;
     --amb-y:    22%;
-    --amb-warm: #101510;
+    --amb-warm: color-mix(in srgb, var(--accent-glow) 55%, #101510);
     --amb-mid:  #0b0c0b;
   }
   50% {
     --amb-x:    50%;
     --amb-y:    78%;
-    --amb-warm: #0c0f14;
+    --amb-warm: color-mix(in srgb, var(--accent-glow) 40%, #0c0f14);
     --amb-mid:  #0d0d0f;
   }
   75% {
     --amb-x:    8%;
     --amb-y:    32%;
-    --amb-warm: #160e07;
+    --amb-warm: color-mix(in srgb, var(--accent-glow) 85%, #0b0b0b);
     --amb-mid:  #0f0e0d;
   }
   100% {
     --amb-x:    20%;
     --amb-y:    50%;
-    --amb-warm: #1a1208;
+    --amb-warm: var(--accent-glow);
     --amb-mid:  #0e0e0e;
   }
 }
@@ -106,7 +106,7 @@ body::after {
     ),
     radial-gradient(
       ellipse 60% 50% at 50% 44%,
-      rgba(255, 199, 153, 0.025) 0%,
+      color-mix(in srgb, var(--accent) 2.5%, transparent) 0%,
       transparent                    70%
     );
 }
@@ -118,7 +118,7 @@ body::after {
     animation: none;
     --amb-x:    20%;
     --amb-y:    50%;
-    --amb-warm: #1a1208;
+    --amb-warm: var(--accent-glow);
     --amb-mid:  #0d0d0d;
 
     background: radial-gradient(

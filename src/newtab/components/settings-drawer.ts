@@ -1,5 +1,6 @@
 import type { SyncStorageSettings, FeedConfig } from "../state/types";
 import { AI_MODELS } from "../state/types";
+import { FONT_OPTIONS } from "../fonts";
 import { uiStore } from "../state/store";
 import { storage } from "../services/storage";
 import { KEYS } from "../services/keys";
@@ -181,11 +182,18 @@ const SECTIONS: Record<string, SectionDef> = {
   appearance: {
     label: "Appearance",
     icon: "palette",
-    description: "Text size, color, and what's shown on the page.",
+    description: "Font, text size, color, and what's shown on the page.",
     parts: [
       {
         kind: "fields",
         fields: [
+          {
+            key: "appearance.fontFamily",
+            label: "Font",
+            type: "select",
+            options: FONT_OPTIONS.map((f) => ({ label: f.label, value: f.id })),
+            hint: "Fonts ship with the extension, so they work offline.",
+          },
           {
             key: "appearance.fontScale",
             label: "Text size",

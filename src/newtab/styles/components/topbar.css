@@ -47,8 +47,8 @@
   gap: 7px;
   padding: 7px 13px 7px 10px;
   border-radius: var(--r-full);
-  border: 1px solid rgba(255, 199, 153, 0.2);
-  background: rgba(255, 199, 153, 0.06);
+  border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
   color: var(--accent);
   font: 500 12px/1 var(--font-sans);
   letter-spacing: 0.01em;
@@ -60,14 +60,14 @@
     box-shadow  var(--dur-base) var(--ease-standard);
 }
 .topbar-ai-btn:hover {
-  background:   rgba(255, 199, 153, 0.13);
-  border-color: rgba(255, 199, 153, 0.38);
+  background:   color-mix(in srgb, var(--accent) 13%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 38%, transparent);
   box-shadow:
-    0 0 0 1px rgba(255, 199, 153, 0.08),
-    0 2px 14px  rgba(255, 199, 153, 0.07);
+    0 0 0 1px color-mix(in srgb, var(--accent) 8%, transparent),
+    0 2px 14px  color-mix(in srgb, var(--accent) 7%, transparent);
 }
 .topbar-ai-btn:active {
-  background: rgba(255, 199, 153, 0.18);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
   transform: scale(0.97);
 }
 .topbar-ai-btn:focus-visible {
