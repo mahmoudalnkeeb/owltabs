@@ -129,46 +129,137 @@ body {
   right: var(--sp-6);
   display: flex;
   flex-direction: column;
+  align-items: flex-end;
   gap: var(--sp-2);
   z-index: var(--z-toast);
+  pointer-events: none;
 }
 .toast {
-  background: var(--surface-2);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-md);
-  padding: 10px 14px;
-  font-size: 13px;
+  --toast-color: var(--mint);
+  position: relative;
+  overflow: hidden;
   display: flex;
   align-items: center;
-  gap: var(--sp-2);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  animation: toast-in 0.25s var(--ease-out);
+  gap: 10px;
+  min-width: 260px;
+  max-width: min(400px, calc(100vw - var(--sp-8)));
+  box-sizing: border-box;
+  padding: 10px 8px 10px 10px;
+  border: 1px solid color-mix(in srgb, var(--toast-color) 22%, var(--border-default));
+  border-radius: var(--r-lg);
+  background:
+    linear-gradient(100deg, color-mix(in srgb, var(--toast-color) 9%, transparent), transparent 55%),
+    color-mix(in srgb, var(--surface-2) 92%, transparent);
+  backdrop-filter: blur(16px) saturate(1.2);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(0, 0, 0, 0.25);
   color: var(--text-primary);
+  font: 500 13.5px/1.35 var(--font-sans);
+  pointer-events: auto;
+  animation: toast-in var(--dur-slow) var(--ease-out);
 }
-.toast-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
+.toast--accent { --toast-color: var(--accent); }
+.toast--red { --toast-color: var(--red); }
+.toast.is-leaving {
+  animation: toast-out var(--dur-base) var(--ease-in) forwards;
+  pointer-events: none;
+}
+
+.toast-icon {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
   flex: 0 0 auto;
+  border-radius: var(--r-full);
+  background: color-mix(in srgb, var(--toast-color) 16%, transparent);
+  color: var(--toast-color);
 }
-.toast-dot.mint { background: var(--mint); }
-.toast-dot.accent { background: var(--accent); }
-.toast-dot.red { background: var(--red); }
+.toast-msg {
+  flex: 1;
+  min-width: 0;
+}
 .toast-action {
-  margin-left: var(--sp-2);
-  background: none;
-  border: none;
-  padding: 0;
-  font: inherit;
-  font-weight: 600;
+  flex: 0 0 auto;
+  padding: 5px 10px;
+  border: 1px solid var(--accent-border);
+  border-radius: var(--r-sm);
+  background: var(--accent-softer);
+  font: 600 12.5px/1 var(--font-sans);
   color: var(--accent);
   cursor: pointer;
+  transition: background var(--dur-fast), border-color var(--dur-fast);
 }
-.toast-action:hover { text-decoration: underline; }
+.toast-action:hover,
+.toast-action:focus-visible {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  outline: none;
+}
+.toast-close {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+.toast-close:hover,
+.toast-close:focus-visible {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+  outline: none;
+}
+
+/* Time left; pauses while the pointer or keyboard focus is on the toast */
+.toast-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: color-mix(in srgb, var(--toast-color) 55%, transparent);
+  transform-origin: left;
+  animation: toast-countdown var(--toast-life, 3000ms) linear forwards;
+}
+.toast:hover .toast-progress,
+.toast:focus-within .toast-progress {
+  animation-play-state: paused;
+}
 
 @keyframes toast-in {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(10px) scale(0.97); }
   to { opacity: 1; transform: none; }
+}
+@keyframes toast-out {
+  to { opacity: 0; transform: translateX(16px); }
+}
+@keyframes toast-countdown {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast,
+  .toast.is-leaving {
+    animation: none;
+  }
+}
+@media (max-width: 720px) {
+  .toast-region {
+    left: var(--sp-4);
+    right: var(--sp-4);
+    bottom: var(--sp-4);
+    align-items: stretch;
+  }
+  .toast {
+    max-width: none;
+  }
 }
 
 /* Form fields */

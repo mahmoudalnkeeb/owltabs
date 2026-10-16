@@ -11,6 +11,8 @@ export function svgIcon(name: string, size = 16): string {
   const icons: Record<string, string> = {
     search: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`,
     settings: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>`,
+    info: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>`,
+    alert: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>`,
     close: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`,
     bookmark: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>`,
     "open-in-new": `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>`,
@@ -39,6 +41,21 @@ export interface ToastAction {
   onClick: () => void;
 }
 
+const TOAST_ICONS = { mint: "check", accent: "info", red: "alert" } as const;
+const MAX_TOASTS = 3;
+
+function dismissToast(el: HTMLElement): void {
+  if (el.classList.contains("is-leaving")) return;
+  el.classList.add("is-leaving");
+  // Fallback for reduced motion, where the exit animation doesn't run.
+  const timer = setTimeout(() => el.remove(), 400);
+  el.addEventListener("animationend", (e) => {
+    if (e.target !== el) return;
+    clearTimeout(timer);
+    el.remove();
+  });
+}
+
 export function showToast(
   msg: string,
   kind: "mint" | "accent" | "red" = "mint",
@@ -46,21 +63,38 @@ export function showToast(
 ) {
   const region = $("#toast-region");
   if (!region) return;
-  const el = document.createElement("div");
-  el.className = "toast";
-  el.innerHTML = `<span class="toast-dot ${kind}"></span><span>${escapeHtml(msg)}</span>`;
-  if (action) {
-    const btn = document.createElement("button");
-    btn.className = "toast-action";
-    btn.textContent = action.label;
-    btn.addEventListener("click", () => {
-      el.remove();
-      action.onClick();
+
+  // The same message again (e.g. saving twice) restarts the old toast instead of stacking.
+  if (!action) {
+    region.querySelectorAll<HTMLElement>(".toast:not(.is-leaving)").forEach((t) => {
+      if (t.dataset.msg === msg) t.remove();
     });
-    el.appendChild(btn);
   }
+
+  const el = document.createElement("div");
+  el.className = `toast toast--${kind}`;
+  el.dataset.msg = msg;
+  el.setAttribute("role", kind === "red" ? "alert" : "status");
+  // Longer for errors and undo actions, so there's time to read and react.
+  el.style.setProperty("--toast-life", `${action ? 6000 : kind === "red" ? 5000 : 3000}ms`);
+  el.innerHTML = `
+    <span class="toast-icon">${svgIcon(TOAST_ICONS[kind], 14)}</span>
+    <span class="toast-msg">${escapeHtml(msg)}</span>
+    ${action ? `<button type="button" class="toast-action">${escapeHtml(action.label)}</button>` : ""}
+    <button type="button" class="toast-close" aria-label="Dismiss">${svgIcon("close", 13)}</button>
+    <span class="toast-progress" aria-hidden="true"></span>`;
+
+  el.querySelector(".toast-action")?.addEventListener("click", () => {
+    dismissToast(el);
+    action?.onClick();
+  });
+  el.querySelector(".toast-close")?.addEventListener("click", () => dismissToast(el));
+  // The countdown bar is the timer: it pauses on hover and focus, and dismisses when it runs out.
+  el.querySelector(".toast-progress")?.addEventListener("animationend", () => dismissToast(el));
+
   region.appendChild(el);
-  setTimeout(() => el.remove(), action ? 6000 : 3000);
+  const visible = [...region.querySelectorAll<HTMLElement>(".toast:not(.is-leaving)")];
+  visible.slice(0, Math.max(0, visible.length - MAX_TOASTS)).forEach(dismissToast);
 }
 
 export { $, $$ };
