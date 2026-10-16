@@ -1,5 +1,5 @@
 import type { FeedItem, LocalStorageCache, SyncStorageSettings } from "../state/types";
-import { AI_MODELS } from "../state/types";
+import { AI_MODELS, AI_PROVIDERS } from "../state/types";
 import { KEYS } from "./keys";
 
 export const DEFAULT_SETTINGS: SyncStorageSettings = {
@@ -19,8 +19,12 @@ export const DEFAULT_SETTINGS: SyncStorageSettings = {
   ],
   ai: {
     enabled: false,
+    provider: "gemini",
     geminiKey: "",
     model: "gemini-3.1-flash-lite",
+    openaiBaseUrl: "",
+    openaiKey: "",
+    openaiModel: "",
     systemPrompt: "",
   },
   appearance: {
@@ -100,6 +104,9 @@ function withDefaults(stored: Partial<SyncStorageSettings> | undefined): SyncSto
   };
   if (!(AI_MODELS as readonly string[]).includes(merged.ai.model)) {
     merged.ai.model = DEFAULT_SETTINGS.ai.model;
+  }
+  if (!(AI_PROVIDERS as readonly string[]).includes(merged.ai.provider)) {
+    merged.ai.provider = DEFAULT_SETTINGS.ai.provider;
   }
   return merged;
 }

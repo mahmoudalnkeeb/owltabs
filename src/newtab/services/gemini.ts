@@ -28,12 +28,16 @@ export interface ToolCall {
   arguments: Record<string, unknown>;
 }
 
+/**
+ * The chat's message format, shared by every provider. `id` pairs a call with
+ * its response; OpenAI-compatible APIs need it, Gemini ignores it.
+ */
 export type GeminiPart =
   | { text: string }
-  | { functionCall: { name: string; args?: Record<string, unknown> } }
-  | { functionResponse: { name: string; response: Record<string, unknown> } };
+  | { functionCall: { id?: string; name: string; args?: Record<string, unknown> } }
+  | { functionResponse: { id?: string; name: string; response: Record<string, unknown> } };
 
-const TOOL_DECLARATIONS: Record<string, unknown>[] = [
+export const TOOL_DECLARATIONS: Record<string, unknown>[] = [
   {
     name: "save_article",
     description:
@@ -123,7 +127,7 @@ export async function* streamGemini(
 ): AsyncGenerator<string> {
   const body: Record<string, unknown> = {
     systemInstruction: { parts: [{ text: systemPrompt }] },
-    contents: messages,
+    contents: messages.map(withoutCallIds),
     generationConfig: { maxOutputTokens: 1024, temperature: 0.7 },
     tools: [{ functionDeclarations: TOOL_DECLARATIONS }],
   };
@@ -183,6 +187,19 @@ export async function* streamGemini(
       }
     }
   }
+}
+
+function withoutCallIds(message: GeminiMessage): GeminiMessage {
+  return {
+    ...message,
+    parts: message.parts.map((part) => {
+      if ("functionCall" in part) return { functionCall: { name: part.functionCall.name, args: part.functionCall.args } };
+      if ("functionResponse" in part) {
+        return { functionResponse: { name: part.functionResponse.name, response: part.functionResponse.response } };
+      }
+      return part;
+    }),
+  };
 }
 
 export function buildSystemPrompt(

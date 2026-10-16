@@ -2,6 +2,7 @@ import type { FeedItem, SyncStorageSettings } from "../state/types";
 import { getDomain } from "../services/favicon";
 import { relativeTime } from "../services/rss";
 import { escapeHtml, svgIcon } from "../utils";
+import { aiReady } from "../services/ai";
 
 export interface RowOptions {
   read: boolean;
@@ -15,7 +16,7 @@ function shortTime(iso: string): string {
 }
 
 export function aiConfigured(settings: SyncStorageSettings | null): boolean {
-  return !!settings?.ai.enabled && !!settings.ai.geminiKey;
+  return !!settings && aiReady(settings.ai);
 }
 
 export function renderRow(

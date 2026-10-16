@@ -2,6 +2,7 @@ import type { SyncStorageSettings } from "../state/types";
 import { uiStore } from "../state/store";
 import { $, svgIcon } from "../utils";
 import { toggleAIChat } from "./ai-chat";
+import { aiReady } from "../services/ai";
 
 let clockIs24 = false;
 let clockTimer: ReturnType<typeof setInterval> | undefined;
@@ -17,7 +18,7 @@ export function renderTopbar(settings: SyncStorageSettings) {
     <time class="clock-date" id="topbar-date"></time>
   ` : "";
 
-  const aiOn = settings.ai.enabled && settings.ai.geminiKey;
+  const aiOn = aiReady(settings.ai);
   controls.innerHTML = `
     ${aiOn ? `
       <button class="topbar-ai-btn" id="nt-ai-btn" aria-label="Open AI assistant" aria-pressed="${uiStore.get().aiActive}" title="AI assistant (${navigator.platform.toUpperCase().includes("MAC") ? "⌘" : "Ctrl+"}/)">

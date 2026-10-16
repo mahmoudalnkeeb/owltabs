@@ -4,6 +4,7 @@ import { uiStore } from "../state/store";
 import { storage } from "../services/storage";
 import { KEYS } from "../services/keys";
 import { clearHistory } from "../services/history";
+import { listOpenAIModels, testOpenAI } from "../services/openai";
 import { getDomain, resolveFavicons } from "../services/favicon";
 import { $, escapeHtml, svgIcon, showToast } from "../utils";
 
@@ -229,11 +230,23 @@ const SECTIONS: Record<string, SectionDef> = {
   ai: {
     label: "AI assistant",
     icon: "sparkles",
-    description: "Ask questions about your feed using Google Gemini with your own API key.",
+    description: "Ask questions about your feed using Google Gemini or any OpenAI-compatible provider, with your own API key.",
     parts: [
       {
         kind: "fields",
-        fields: [{ key: "ai.enabled", label: "AI assistant", type: "toggle" }],
+        fields: [
+          { key: "ai.enabled", label: "AI assistant", type: "toggle" },
+          {
+            key: "ai.provider",
+            label: "Provider",
+            type: "segment",
+            options: [
+              { label: "Google Gemini", value: "gemini" },
+              { label: "OpenAI-compatible", value: "openai" },
+            ],
+            hint: "OpenAI-compatible works with Groq, OpenRouter, Mistral, Cerebras, Ollama, and similar APIs.",
+          },
+        ],
       },
       { kind: "custom", render: renderAIKeyCustom, init: initAIKeyCustom },
       {
@@ -244,6 +257,7 @@ const SECTIONS: Record<string, SectionDef> = {
             label: "Model",
             type: "select",
             options: AI_MODELS.map((m) => ({ label: m, value: m })),
+            visible: (s) => s.ai.provider === "gemini",
           },
           {
             key: "ai.systemPrompt",
@@ -914,8 +928,18 @@ export async function addFeed(feed: FeedConfig): Promise<void> {
 
 // ── Custom: AI key ──
 
+// Base URLs for the OpenAI-compatible providers people use most; any other works too.
+const OPENAI_PRESETS = [
+  { label: "Groq", url: "https://api.groq.com/openai/v1" },
+  { label: "OpenRouter", url: "https://openrouter.ai/api/v1" },
+  { label: "Mistral", url: "https://api.mistral.ai/v1" },
+  { label: "Cerebras", url: "https://api.cerebras.ai/v1" },
+  { label: "Ollama", url: "http://localhost:11434/v1" },
+];
+
 function renderAIKeyCustom(): string {
   const ai = currentSettings.ai;
+  if (ai.provider === "openai") return renderOpenAICustom();
   return `
     <section class="set-group">
       <h3 class="set-group-title">Gemini API key</h3>
@@ -938,7 +962,112 @@ function renderAIKeyCustom(): string {
   `;
 }
 
+function renderOpenAICustom(): string {
+  const ai = currentSettings.ai;
+  return `
+    <section class="set-group">
+      <h3 class="set-group-title">OpenAI-compatible provider</h3>
+      <form class="set-card set-form" id="oa-form">
+        <div class="set-field">
+          <label for="oa-url">Base URL</label>
+          <input class="field" id="oa-url" type="url" value="${escapeHtml(ai.openaiBaseUrl)}" placeholder="https://api.groq.com/openai/v1" autocomplete="off" spellcheck="false" required />
+          <div class="set-presets" aria-label="Fill in a known provider">
+            ${OPENAI_PRESETS.map((p) => `<button type="button" class="chip" data-preset="${escapeHtml(p.url)}">${escapeHtml(p.label)}</button>`).join("")}
+          </div>
+        </div>
+        <div class="set-field">
+          <label for="oa-key">API key <span>(not needed for Ollama)</span></label>
+          <div class="field-group">
+            <input class="field" id="oa-key" type="password" value="${escapeHtml(ai.openaiKey)}" placeholder="Paste your key" autocomplete="off" spellcheck="false" />
+            <button class="btn btn-ghost btn-sm" type="button" id="oa-key-show" aria-pressed="false">Show</button>
+          </div>
+          <div class="set-hint">Stored in your browser's sync storage and sent only to the base URL above.</div>
+        </div>
+        <div class="set-field">
+          <label for="oa-model">Model</label>
+          <div class="field-group">
+            <input class="field" id="oa-model" list="oa-models" value="${escapeHtml(ai.openaiModel)}" placeholder="e.g. llama-3.3-70b-versatile" autocomplete="off" spellcheck="false" required />
+            <button class="btn btn-ghost btn-sm" type="button" id="oa-load-models">Load models</button>
+          </div>
+          <datalist id="oa-models"></datalist>
+          <div class="set-hint">Pick a model that supports tool calling, so the assistant can save and show articles.</div>
+        </div>
+        <div class="set-form-foot">
+          <span class="set-status" id="oa-status" role="status"></span>
+          <button class="btn btn-secondary btn-sm" type="button" id="oa-test">Test connection</button>
+          <button class="btn btn-primary btn-sm" type="submit">Save</button>
+        </div>
+      </form>
+    </section>
+  `;
+}
+
+function initOpenAICustom() {
+  const urlInput = $("#oa-url") as HTMLInputElement;
+  const keyInput = $("#oa-key") as HTMLInputElement;
+  const modelInput = $("#oa-model") as HTMLInputElement;
+  const showBtn = $("#oa-key-show") as HTMLButtonElement;
+  const statusEl = $("#oa-status") as HTMLElement;
+  const form = () => ({
+    openaiBaseUrl: urlInput.value.trim(),
+    openaiKey: keyInput.value.trim(),
+    openaiModel: modelInput.value.trim(),
+  });
+  const status = (text: string, kind?: "ok" | "error") => {
+    statusEl.className = "set-status" + (kind ? ` is-${kind}` : "");
+    statusEl.innerHTML = kind === "ok" ? `${svgIcon("check", 13)} ${escapeHtml(text)}` : escapeHtml(text);
+  };
+
+  document.querySelectorAll<HTMLButtonElement>("#oa-form [data-preset]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      urlInput.value = btn.dataset.preset!;
+      urlInput.focus();
+    });
+  });
+
+  showBtn.addEventListener("click", () => {
+    const show = keyInput.type === "password";
+    keyInput.type = show ? "text" : "password";
+    showBtn.textContent = show ? "Hide" : "Show";
+    showBtn.setAttribute("aria-pressed", String(show));
+  });
+
+  $("#oa-load-models")?.addEventListener("click", async () => {
+    const { openaiBaseUrl, openaiKey } = form();
+    if (!openaiBaseUrl) return status("Enter a base URL first", "error");
+    status("Loading models…");
+    try {
+      const models = await listOpenAIModels(openaiBaseUrl, openaiKey);
+      ($("#oa-models") as HTMLDataListElement).innerHTML = models
+        .map((m) => `<option value="${escapeHtml(m)}"></option>`)
+        .join("");
+      status(`${models.length} models: pick one in the Model box`, "ok");
+      modelInput.focus();
+    } catch (err) {
+      status(err instanceof Error ? err.message : "Could not load models", "error");
+    }
+  });
+
+  $("#oa-test")?.addEventListener("click", async () => {
+    const config = form();
+    if (!config.openaiBaseUrl || !config.openaiModel) return status("Enter a base URL and model first", "error");
+    status("Testing…");
+    try {
+      await testOpenAI(config);
+      status("Connected", "ok");
+    } catch (err) {
+      status(err instanceof Error ? err.message : "Connection failed", "error");
+    }
+  });
+
+  ($("#oa-form") as HTMLFormElement).addEventListener("submit", async (e) => {
+    e.preventDefault();
+    await save({ ai: { ...currentSettings.ai, ...form() } });
+  });
+}
+
 function initAIKeyCustom() {
+  if (currentSettings.ai.provider === "openai") return initOpenAICustom();
   const keyInput = $("#ai-key") as HTMLInputElement;
   const showBtn = $("#ai-key-show") as HTMLButtonElement;
 

@@ -26,10 +26,20 @@ export const AI_MODELS = [
 
 export type AIModel = (typeof AI_MODELS)[number];
 
+export const AI_PROVIDERS = ["gemini", "openai"] as const;
+/** "openai" is any OpenAI-compatible chat completions API (Groq, OpenRouter, Mistral, Ollama…). */
+export type AIProvider = (typeof AI_PROVIDERS)[number];
+
 export interface AIConfig {
   enabled: boolean;
+  provider: AIProvider;
   geminiKey: string;
   model: AIModel;
+  /** OpenAI-compatible base URL, e.g. https://api.groq.com/openai/v1 */
+  openaiBaseUrl: string;
+  /** Optional: local servers like Ollama need none. */
+  openaiKey: string;
+  openaiModel: string;
   systemPrompt: string;
 }
 

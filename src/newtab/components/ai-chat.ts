@@ -1,7 +1,7 @@
 import type { FeedItem, SyncStorageSettings, AIResponseBlock } from "../state/types";
 import { uiStore, feedStore } from "../state/store";
+import { aiReady, streamChat } from "../services/ai";
 import {
-  streamGemini,
   buildSystemPrompt,
   type GeminiMessage,
   type StreamMeta,
@@ -293,7 +293,7 @@ function renderCardGrid(ids: string[]): string {
 
 async function sendToAI(query: string, displayQuery = query, loadingLabel?: string) {
   if (!aiSettings || !query) return;
-  if (!aiSettings.ai.enabled || !aiSettings.ai.geminiKey) {
+  if (!aiReady(aiSettings.ai)) {
     showToast("Configure AI in Settings first", "red");
     return;
   }
@@ -335,9 +335,8 @@ async function sendToAI(query: string, displayQuery = query, loadingLabel?: stri
       const toolCalls: ToolCall[] = [];
       const meta: StreamMeta = { interactionId: "" };
 
-      for await (const token of streamGemini(
-        aiSettings.ai.geminiKey,
-        aiSettings.ai.model,
+      for await (const token of streamChat(
+        aiSettings.ai,
         messages,
         systemPrompt,
         meta,
@@ -358,13 +357,14 @@ async function sendToAI(query: string, displayQuery = query, loadingLabel?: stri
         {
           role: "model",
           parts: toolCalls.map((tc) => ({
-            functionCall: { name: tc.name, args: tc.arguments },
+            functionCall: { id: tc.id, name: tc.name, args: tc.arguments },
           })),
         },
         {
           role: "user",
           parts: await Promise.all(toolCalls.map(async (tc) => ({
             functionResponse: {
+              id: tc.id,
               name: tc.name,
               response: { result: await executeToolCall(tc) },
             },
