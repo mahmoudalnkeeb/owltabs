@@ -25,7 +25,7 @@
 }
 .list-head-title h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 600;
   letter-spacing: -0.01em;
   white-space: nowrap;
@@ -33,7 +33,7 @@
   text-overflow: ellipsis;
 }
 .list-head-count {
-  font: 400 12px/1 var(--font-mono);
+  font: 400 13px/1 var(--font-mono);
   color: var(--text-tertiary);
   white-space: nowrap;
 }
@@ -43,12 +43,44 @@
   flex: 0 0 auto;
 }
 
+/* ─── Scroll container: the only part of the page that scrolls ─── */
+
+.feed-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: var(--sp-16);
+  scrollbar-width: none;
+}
+.feed-list::-webkit-scrollbar {
+  display: none;
+}
+/* With no scrollbar, faded edges show there is more above or below */
+.feed-list {
+  --fade-top: 0px;
+  --fade-bottom: 0px;
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 var(--fade-top),
+    #000 calc(100% - var(--fade-bottom)),
+    transparent 100%
+  );
+}
+.feed-list.can-scroll-up {
+  --fade-top: 48px;
+}
+.feed-list.can-scroll-down {
+  --fade-bottom: 72px;
+}
+
 /* ─── Day groups ───────────────────────────────────────── */
 
 .list-group {
   margin: 0;
-  padding: var(--sp-5) var(--sp-3) var(--sp-1);
-  font-size: 12px;
+  padding: var(--sp-5) var(--sp-4) var(--sp-1);
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-tertiary);
 }
@@ -63,15 +95,15 @@
   display: grid;
   grid-template-columns: var(--row-time-col) minmax(0, 1fr) auto;
   align-items: start;
-  column-gap: var(--sp-4);
-  padding: var(--sp-3);
+  column-gap: var(--sp-5);
+  padding: 14px var(--sp-4);
   border-radius: var(--r-md);
   transition: background var(--dur-fast) var(--ease-standard);
 }
-/* Keeps a row clear of the fixed header (and the day heading above it)
-   when keyboard navigation scrolls it into view. */
+/* Keeps the day heading above a row visible when keyboard navigation
+   scrolls it into view. */
 .row {
-  scroll-margin-top: calc(var(--nt-topbar-height) + 40px);
+  scroll-margin-top: 40px;
   scroll-margin-bottom: var(--sp-6);
 }
 .row:hover {
@@ -96,8 +128,8 @@
 }
 
 .row-time {
-  padding-top: 3px;
-  font: 400 11.5px/1.4 var(--font-mono);
+  padding-top: 4px;
+  font: 400 12.5px/1.4 var(--font-mono);
   color: var(--text-tertiary);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -110,12 +142,12 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .row-title {
   margin: 0;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 600;
   line-height: 1.4;
   letter-spacing: -0.005em;
@@ -162,16 +194,16 @@
 .row-meta {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   min-width: 0;
-  font-size: 12.5px;
+  font-size: 13.5px;
   line-height: 1.4;
   color: var(--text-tertiary);
 }
 /* Favicons are drawn for light browser chrome; a light tile keeps dark ones visible */
 .row-favicon {
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   padding: 2px;
   border-radius: 4px;
   background: #ececec;
@@ -302,6 +334,10 @@
 
 .feed-list--compact .row {
   grid-template-columns: minmax(0, 1fr) auto;
+  padding: var(--sp-3);
+}
+.feed-list--compact .row-title {
+  font-size: 15px;
 }
 .feed-list--compact .row-time,
 .feed-list--compact .row-excerpt,

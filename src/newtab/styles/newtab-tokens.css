@@ -8,22 +8,24 @@
   /* Reader = sidebar + gap + list, plus the page's side padding */
   --nt-content-width: calc(var(--nt-sidebar-width) + 40px + var(--nt-list-width) + 48px);
   --nt-topbar-height: 64px; /* fixed header */
-  --nt-sidebar-width: 220px;
-  --nt-list-width: 780px; /* headline list max-width; keeps lines readable */
+  --nt-sidebar-width: 240px;
+  /* Headline list max-width. The list fills whatever is narrower than this, so
+     laptop screens don't leave wide empty margins. */
+  --nt-list-width: 1040px;
   --ai-panel-width: 420px;
 
   /* ---------- Omnibox ---------- */
-  --omnibox-width: 600px;
-  --omnibox-height: 40px; /* inner input row height */
+  --omnibox-width: 680px;
+  --omnibox-height: 44px; /* inner input row height */
   --omnibox-radius: var(--r-xl);
   --omnibox-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
   --omnibox-shadow-focus:
     0 24px 80px rgba(0, 0, 0, 0.45), 0 0 0 1px var(--accent);
 
   /* ---------- Feed list ---------- */
-  --row-time-col: 52px; /* mono time gutter; fits "Sep 29" */
-  --row-thumb-w: 84px;
-  --row-thumb-h: 56px;
+  --row-time-col: 58px; /* mono time gutter; fits "Sep 29" */
+  --row-thumb-w: 120px;
+  --row-thumb-h: 80px;
 
   /* ---------- AI ---------- */
   --ai-glow: 0 24px 80px rgba(0, 0, 0, 0.45), 0 0 0 1px var(--accent);

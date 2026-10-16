@@ -189,23 +189,27 @@ async function render(): Promise<void> {
   if (sentinel && sentinelObserver) sentinelObserver.observe(sentinel);
 }
 
+/** Fades the list's edges where there is more to scroll to, standing in for a scrollbar. */
+function updateScrollEdges(list: HTMLElement): void {
+  list.classList.toggle("can-scroll-up", list.scrollTop > 4);
+  list.classList.toggle("can-scroll-down", list.scrollTop + list.clientHeight < list.scrollHeight - 4);
+}
+
 function rowFor(id: string | null): HTMLElement | null {
   if (!id || !listEl) return null;
   return listEl.querySelector<HTMLElement>(`.row[data-id="${CSS.escape(id)}"]`);
 }
 
-function headerHeight(): number {
-  return document.getElementById("nt-topbar")?.offsetHeight ?? 64;
-}
-
 function isInView(row: HTMLElement): boolean {
+  if (!listEl) return false;
+  const view = listEl.getBoundingClientRect();
   const r = row.getBoundingClientRect();
-  return r.bottom > headerHeight() + 8 && r.top < window.innerHeight - 8;
+  return r.bottom > view.top + 8 && r.top < view.bottom - 8;
 }
 
-/** The first row not hidden under the header, for starting from where the reader is looking. */
+/** The first row not scrolled out of the list, for starting from where the reader is looking. */
 function firstVisibleRow(): HTMLElement | null {
-  const top = headerHeight() + 8;
+  const top = (listEl?.getBoundingClientRect().top ?? 0) + 8;
   for (const row of listEl?.querySelectorAll<HTMLElement>(".row[data-id]") ?? []) {
     if (row.getBoundingClientRect().bottom > top) return row;
   }
@@ -227,7 +231,7 @@ function applySelection({ scroll = false, focus = false, instant = false }: Sele
   const index = currentItems.findIndex((i) => i.id === selectedId);
   if (index >= 0) selectedIndex = index;
   if (focus) row.querySelector<HTMLElement>(".row-title a")?.focus({ preventScroll: true });
-  // scroll-margin on .row keeps it clear of the fixed header.
+  // scroll-margin on .row keeps its day heading in view.
   if (scroll) row.scrollIntoView({ block: "nearest", behavior: instant ? "auto" : "smooth" });
 }
 
@@ -257,13 +261,13 @@ export function moveSelection(delta: 1 | -1, opts: { searchAtTop?: boolean } = {
   if (index === 0 && delta < 0 && opts.searchAtTop) {
     selectedId = null;
     applySelection();
-    window.scrollTo({ top: 0, behavior: instant ? "auto" : "smooth" });
+    listEl.scrollTo({ top: 0, behavior: instant ? "auto" : "smooth" });
     document.getElementById("nt-search-input")?.focus();
     return;
   }
   const next = Math.max(0, Math.min(currentItems.length - 1, index + delta));
-  // At the top, k reveals the quick links and header area again.
-  if (next === 0 && delta < 0) window.scrollTo({ top: 0, behavior: instant ? "auto" : "smooth" });
+  // At the top, k scrolls the list fully back to its start.
+  if (next === 0 && delta < 0) listEl.scrollTo({ top: 0, behavior: instant ? "auto" : "smooth" });
   selectedId = currentItems[next].id;
   if (next >= visibleCount) {
     visibleCount += BATCH;
@@ -341,10 +345,16 @@ export function renderFeedList(): void {
       visibleCount += BATCH;
       void render();
     },
-    { rootMargin: "600px 0px" },
+    { root: list, rootMargin: "600px 0px" },
   );
 
   handleThumbErrors(list);
+
+  const edges = () => updateScrollEdges(list);
+  list.addEventListener("scroll", edges, { passive: true });
+  window.addEventListener("resize", edges);
+  new MutationObserver(edges).observe(list, { childList: true });
+  edges();
 
   feedStore.subscribe(() => void render());
 
@@ -365,10 +375,7 @@ export function renderFeedList(): void {
     visibleCount = BATCH;
     selectedId = null;
     void render();
-    if (filterChanged) {
-      const top = document.querySelector<HTMLElement>(".reader")?.offsetTop ?? 0;
-      if (window.scrollY > top) window.scrollTo({ top: top - 72 });
-    }
+    if (filterChanged) list.scrollTo({ top: 0 });
   });
 
   const onClick = async (e: MouseEvent) => {

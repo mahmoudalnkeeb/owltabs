@@ -46,7 +46,7 @@
   border: none;
   outline: none;
   color: var(--text-primary);
-  font: 400 14.5px/1 var(--font-sans);
+  font: 400 15.5px/1 var(--font-sans);
 }
 .omnibox-input::placeholder {
   color: var(--text-tertiary);
@@ -107,7 +107,7 @@
   gap: var(--sp-3);
   padding: 9px var(--sp-3);
   border-radius: var(--r-md);
-  font-size: 13.5px;
+  font-size: 14.5px;
   color: var(--text-secondary);
   cursor: pointer;
 }

@@ -3,9 +3,9 @@
    ============================================================ */
 
 .feed-sidebar {
-  position: sticky;
-  top: calc(var(--nt-topbar-height) + var(--sp-5));
-  max-height: calc(100vh - var(--nt-topbar-height) - var(--sp-10));
+  max-height: 100%;
+  padding-bottom: var(--sp-6);
+  box-sizing: border-box;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -25,7 +25,7 @@
 .side-heading {
   margin: 0 0 var(--sp-1);
   padding: 0 var(--sp-3);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-tertiary);
 }
@@ -36,13 +36,13 @@
   align-items: center;
   gap: var(--sp-2);
   width: 100%;
-  min-height: 32px;
+  min-height: 38px;
   padding: 0 var(--sp-3);
   border: none;
   border-radius: var(--r-sm);
   background: transparent;
   color: var(--text-secondary);
-  font: 400 13.5px/1.2 var(--font-sans);
+  font: 400 14.5px/1.2 var(--font-sans);
   text-align: left;
   cursor: pointer;
   transition: background var(--dur-fast), color var(--dur-fast);
@@ -66,7 +66,7 @@
 }
 
 .side-count {
-  font: 400 11.5px/1 var(--font-mono);
+  font: 400 12.5px/1 var(--font-mono);
   color: var(--text-tertiary);
   font-variant-numeric: tabular-nums;
 }
@@ -76,8 +76,8 @@
 
 /* Light tile so dark favicons (GitHub, dev.to) stay visible */
 .side-icon {
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   padding: 2px;
   flex: 0 0 auto;
   border-radius: 4px;
@@ -86,7 +86,7 @@
 .side-icon--letter {
   display: grid;
   place-items: center;
-  font: 600 9px/1 var(--font-sans);
+  font: 600 10px/1 var(--font-sans);
   color: var(--text-secondary);
   background: var(--surface-2);
 }
@@ -124,7 +124,6 @@
 
 @media (max-width: 900px) {
   .feed-sidebar {
-    position: static;
     max-height: none;
     flex-direction: row;
     gap: var(--sp-1);

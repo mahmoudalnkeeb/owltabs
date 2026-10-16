@@ -135,8 +135,9 @@ async function init() {
     renderSettingsDrawer(settings);
 
     const topbar = document.getElementById("nt-topbar");
-    const markScrolled = () => topbar?.classList.toggle("is-scrolled", window.scrollY > 4);
-    window.addEventListener("scroll", markScrolled, { passive: true });
+    const feedList = document.getElementById("nt-feed-list");
+    const markScrolled = () => topbar?.classList.toggle("is-scrolled", (feedList?.scrollTop ?? 0) > 4);
+    feedList?.addEventListener("scroll", markScrolled, { passive: true });
     markScrolled();
 
     // AI chat is a side panel; on wide screens the page makes room for it.
