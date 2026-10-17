@@ -91,3 +91,76 @@ export function findFeed(feeds: FeedConfig[], ref: string): FeedConfig | undefin
 }
 
 export const REFRESH_OPTIONS = [0, 30, 60, 120] as const;
+
+// ── OPML ──
+
+export interface OpmlFeed {
+  url: string;
+  label: string;
+  category: string;
+}
+
+/**
+ * Reads the feeds from an OPML file, as exported by Feedly, Inoreader, NetNewsWire
+ * and most other readers. A feed's topic is the folder outline it sits in.
+ */
+export function parseOpml(text: string): OpmlFeed[] {
+  const xml = new DOMParser().parseFromString(text, "text/xml");
+  if (xml.querySelector("parsererror") || xml.documentElement?.localName !== "opml") {
+    throw new Error("That file isn't valid OPML");
+  }
+  const feeds: OpmlFeed[] = [];
+  const seen = new Set<string>();
+  for (const node of xml.querySelectorAll("outline[xmlUrl]")) {
+    let url = node.getAttribute("xmlUrl")?.trim() ?? "";
+    if (!/^https?:\/\//i.test(url)) continue;
+    try {
+      url = new URL(url).href;
+    } catch {
+      continue;
+    }
+    if (seen.has(url)) continue;
+    seen.add(url);
+    const parent = node.parentElement;
+    const folder =
+      parent?.localName === "outline" && !parent.hasAttribute("xmlUrl")
+        ? parent.getAttribute("text") || parent.getAttribute("title")
+        : null;
+    const category = (folder || node.getAttribute("category")?.split(/[,/]/).find(Boolean) || "general").trim();
+    const label =
+      node.getAttribute("title")?.trim() || node.getAttribute("text")?.trim() || new URL(url).hostname.replace(/^www\./, "");
+    feeds.push({ url, label, category: category.toLowerCase() });
+  }
+  if (!feeds.length) throw new Error("No feeds found in that file");
+  return feeds;
+}
+
+const xmlAttr = (s: string) =>
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+/** Writes feeds as OPML 2.0, one folder per topic, so any reader can import them. */
+export function toOpml(feeds: FeedConfig[]): string {
+  const byTopic = new Map<string, FeedConfig[]>();
+  for (const f of feeds) {
+    const topic = f.category || "general";
+    byTopic.set(topic, [...(byTopic.get(topic) ?? []), f]);
+  }
+  const folders = [...byTopic].map(([topic, list]) => {
+    const items = list.map(
+      (f) =>
+        `      <outline type="rss" text="${xmlAttr(f.label)}" title="${xmlAttr(f.label)}" xmlUrl="${xmlAttr(f.url)}"/>`,
+    );
+    return `    <outline text="${xmlAttr(topic)}" title="${xmlAttr(topic)}">\n${items.join("\n")}\n    </outline>`;
+  });
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<opml version="2.0">
+  <head>
+    <title>OwlTabs feeds</title>
+    <dateCreated>${new Date().toUTCString()}</dateCreated>
+  </head>
+  <body>
+${folders.join("\n")}
+  </body>
+</opml>
+`;
+}

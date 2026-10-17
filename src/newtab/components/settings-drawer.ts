@@ -7,6 +7,7 @@ import { KEYS } from "../services/keys";
 import { clearHistory } from "../services/history";
 import { listOpenAIModels, testOpenAI } from "../services/openai";
 import { getDomain, resolveFavicons } from "../services/favicon";
+import { parseOpml, toOpml } from "../services/feed-manager";
 import { $, escapeHtml, svgIcon, showToast } from "../utils";
 
 // ── Types ──
@@ -765,6 +766,23 @@ function renderFeedsCustom(): string {
     </section>
 
     <section class="set-group">
+      <h3 class="set-group-title">Import and export</h3>
+      <div class="set-card">
+        <div class="set-row">
+          ${rowText("Import from OPML", "Bring your feeds over from Feedly, Inoreader, NetNewsWire, or any other reader. Folders become topics.")}
+          <div class="set-control">
+            <input type="file" id="feed-opml-file" accept=".opml,.xml,text/xml,text/x-opml,application/xml" hidden />
+            <button class="btn btn-secondary btn-sm" id="feed-opml-import">${svgIcon("upload", 13)} Import</button>
+          </div>
+        </div>
+        <div class="set-row">
+          ${rowText("Export as OPML", "Download your feeds to back them up or move them to another reader.")}
+          <div class="set-control"><button class="btn btn-secondary btn-sm" id="feed-opml-export" ${feeds.length ? "" : "disabled"}>${svgIcon("download", 13)} Export</button></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="set-group">
       <h3 class="set-group-title">Add a feed</h3>
       <form class="set-card set-form" id="feed-settings-form">
         <div class="set-field">
@@ -873,6 +891,26 @@ function initFeedsCustom() {
     });
   });
 
+  const fileInput = $("#feed-opml-file") as HTMLInputElement | null;
+  $("#feed-opml-import")?.addEventListener("click", () => fileInput?.click());
+  fileInput?.addEventListener("change", async () => {
+    const file = fileInput.files?.[0];
+    fileInput.value = "";
+    if (file) await importOpml(file);
+  });
+
+  $("#feed-opml-export")?.addEventListener("click", () => {
+    const feeds = currentSettings.feedsConfig;
+    const blob = new Blob([toOpml(feeds)], { type: "text/x-opml" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `owltabs-feeds-${new Date().toISOString().slice(0, 10)}.opml`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast(`Exported ${feeds.length} ${feeds.length === 1 ? "feed" : "feeds"}`, "mint");
+  });
+
   body.querySelectorAll<HTMLButtonElement>("[data-add-catalog]").forEach((btn) => {
     btn.addEventListener("click", async () => {
       btn.disabled = true;
@@ -923,6 +961,47 @@ function initFeedsCustom() {
       maxArticles: 32,
     });
   });
+}
+
+async function importOpml(file: File): Promise<void> {
+  let parsed;
+  try {
+    parsed = parseOpml(await file.text());
+  } catch (err) {
+    showToast(err instanceof Error ? err.message : "Couldn't read that file", "red");
+    return;
+  }
+  const before = currentSettings.feedsConfig;
+  const have = new Set(before.map((f) => f.url));
+  const stamp = Date.now();
+  const fresh: FeedConfig[] = parsed
+    .filter((f) => !have.has(f.url))
+    .map((f, i) => ({
+      id: `feed-${stamp}-${i}`,
+      url: f.url,
+      label: f.label,
+      category: f.category,
+      enabled: true,
+      refreshIntervalMins: 60,
+      maxArticles: 32,
+    }));
+  if (!fresh.length) {
+    showToast("You already follow every feed in that file", "accent");
+    return;
+  }
+  try {
+    await save({ feedsConfig: [...before, ...fresh] });
+  } catch {
+    // chrome.storage.sync allows ~100KB in total; a very large OPML file can exceed it.
+    showToast("Too many feeds to store. Try importing fewer.", "red");
+    return;
+  }
+  const skipped = parsed.length - fresh.length;
+  showToast(
+    `Imported ${fresh.length} ${fresh.length === 1 ? "feed" : "feeds"}${skipped ? ` (${skipped} already followed)` : ""}`,
+    "mint",
+    { label: "Undo", onClick: () => void save({ feedsConfig: before }) },
+  );
 }
 
 export async function addFeed(feed: FeedConfig): Promise<void> {
