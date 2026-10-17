@@ -20,6 +20,7 @@ A keyboard-first new tab for Chrome and Brave. Open a tab and you can search, ju
 - **Keyboard navigation.** Move through articles with `j`/`k` or the arrow keys, then open, save, mark read, or ask AI without touching the mouse. Press `?` for the full list.
 - **Quick links.** Pinned sites above the feed. Drag to reorder, hover to remove (with undo).
 - **AI assistant.** A side panel that summarizes your feed, finds trends, and answers questions about articles, using Gemini with your own API key. Press `a` on any article to ask about it.
+- **Daily briefing.** On the first new tab of the day, the AI sums up what you have not read yet in a few themes, with links to the articles worth opening. One request a day; turn it off under AI assistant.
 - **OPML import and export.** Bring your feeds over from another reader, or back them up. Folders become topics.
 - **Settings.** Manage feeds (refresh interval, article limit, on/off), quick links, search engine, text size, accent color, thumbnails, clock, and data export or reset.
 - **Starter feeds.** With no feeds yet, add suggested ones in a click or paste any RSS or Atom URL.

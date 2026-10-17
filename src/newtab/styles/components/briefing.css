@@ -1,0 +1,114 @@
+/* ============================================================
+   briefing.css — daily "catch me up" card above the article list
+   ============================================================ */
+
+.briefing {
+  flex: 0 0 auto;
+  margin: 0 var(--sp-3) var(--sp-3);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--r-lg);
+  background: var(--accent-softer);
+}
+.briefing[hidden] {
+  display: none;
+}
+
+.briefing-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-2) var(--sp-1) 0;
+}
+
+.briefing-toggle {
+  appearance: none;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border: none;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.briefing-toggle:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+.briefing-icon {
+  display: grid;
+  color: var(--accent);
+}
+.briefing-title {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  white-space: nowrap;
+}
+.briefing-meta {
+  font: 400 0.75rem/1 var(--font-mono);
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.briefing-chevron {
+  display: grid;
+  margin-left: auto;
+  color: var(--text-tertiary);
+  transition: transform var(--dur-base) var(--ease-out);
+}
+.briefing.is-collapsed .briefing-chevron {
+  transform: rotate(-90deg);
+}
+
+.briefing-actions {
+  display: flex;
+  gap: 2px;
+}
+.briefing-actions .set-icon-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.briefing-body {
+  max-height: 38vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 var(--sp-5) var(--sp-4);
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+.briefing-body p {
+  margin: 0 0 var(--sp-3);
+}
+.briefing-body p:last-child {
+  margin-bottom: 0;
+}
+.briefing-body strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.briefing-body ul,
+.briefing-body ol {
+  margin: 0 0 var(--sp-3);
+  padding-left: var(--sp-5);
+}
+.briefing-body a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.briefing-body a:hover {
+  text-decoration: underline;
+}
+.briefing-body .sk {
+  margin-bottom: var(--sp-2);
+}
+.briefing-error {
+  color: var(--red);
+}

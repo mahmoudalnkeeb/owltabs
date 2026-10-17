@@ -20,6 +20,16 @@ export interface GeminiMessage {
 
 export interface StreamMeta {
   interactionId: string;
+  /** Why the model stopped, e.g. "STOP", "MAX_TOKENS", "SAFETY", "length". */
+  finishReason?: string;
+}
+
+/** Per-request overrides; the chat uses the defaults. */
+export interface StreamOptions {
+  /** Offer the assistant's tools. Default true. */
+  tools?: boolean;
+  /** Output budget. Thinking models spend part of it reasoning. */
+  maxTokens?: number;
 }
 
 export interface ToolCall {
@@ -226,13 +236,14 @@ export async function* streamGemini(
   meta?: StreamMeta,
   toolCalls?: ToolCall[],
   signal?: AbortSignal,
+  options: StreamOptions = {},
 ): AsyncGenerator<string> {
   const body: Record<string, unknown> = {
     systemInstruction: { parts: [{ text: systemPrompt }] },
     contents: messages.map(withoutCallIds),
-    generationConfig: { maxOutputTokens: 1024, temperature: 0.7 },
-    tools: [{ functionDeclarations: TOOL_DECLARATIONS }],
+    generationConfig: { maxOutputTokens: options.maxTokens ?? 1024, temperature: 0.7 },
   };
+  if (options.tools !== false) body.tools = [{ functionDeclarations: TOOL_DECLARATIONS }];
 
   const res = await fetch(GEMINI_ENDPOINT(model, apiKey), {
     method: "POST",
@@ -271,6 +282,8 @@ export async function* streamGemini(
       try {
         const chunk = JSON.parse(jsonStr);
         if (chunk.responseId && meta) meta.interactionId = chunk.responseId;
+        const finish = chunk.candidates?.[0]?.finishReason ?? chunk.promptFeedback?.blockReason;
+        if (finish && meta) meta.finishReason = finish;
 
         const parts = chunk.candidates?.[0]?.content?.parts || [];
         for (const part of parts) {

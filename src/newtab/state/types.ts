@@ -41,6 +41,8 @@ export interface AIConfig {
   openaiKey: string;
   openaiModel: string;
   systemPrompt: string;
+  /** Write a short AI briefing of unread articles on the first new tab each day. */
+  dailyBriefing: boolean;
 }
 
 /** Interface fonts, bundled with the extension; the stacks live in fonts.ts. */

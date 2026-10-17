@@ -26,6 +26,7 @@ export const DEFAULT_SETTINGS: SyncStorageSettings = {
     openaiKey: "",
     openaiModel: "",
     systemPrompt: "",
+    dailyBriefing: true,
   },
   appearance: {
     showThumbnails: true,

@@ -269,6 +269,12 @@ const SECTIONS: Record<string, SectionDef> = {
             visible: (s) => s.ai.provider === "gemini",
           },
           {
+            key: "ai.dailyBriefing",
+            label: "Daily briefing",
+            type: "toggle",
+            hint: "On your first new tab each day, summarize what you haven't read yet at the top of the feed. Uses one AI request a day.",
+          },
+          {
             key: "ai.systemPrompt",
             label: "Custom instructions",
             type: "textarea",

@@ -17,6 +17,7 @@ export const KEYS = {
   FAVICON_CACHE:   `${APP_PREFIX}_favicon_cache_v2`,
   READ_ARTICLES:   `${APP_PREFIX}_read_articles_v1`,
   SEARCH_HISTORY:  `${APP_PREFIX}_search_history_v1`,
+  BRIEFING:        `${APP_PREFIX}_briefing_v1`,
   AI_SESSION:      `${APP_PREFIX}_ai_session_v1`, // chrome.storage.session: the open conversation
   MIGRATED:       `${APP_PREFIX}_migrated_v1`,
 } as const;

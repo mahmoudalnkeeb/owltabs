@@ -9,6 +9,7 @@ import { loadReadState } from "./services/read";
 import { shortcutsOpen, toggleShortcuts } from "./components/shortcuts";
 import { setAISettings, initAIChat, toggleAIChat } from "./components/ai-chat";
 import { renderSettingsDrawer } from "./components/settings-drawer";
+import { initBriefing, setBriefingSettings } from "./components/briefing";
 import { storage } from "./services/storage";
 import { FONT_STACKS } from "./fonts";
 import { feedStore, uiStore } from "./state/store";
@@ -29,6 +30,7 @@ import "./styles/components/topbar.css";
 import "./styles/components/omnibox.css";
 import "./styles/components/quick-links.css";
 import "./styles/components/feed-list.css";
+import "./styles/components/briefing.css";
 import "./styles/components/feed-sidebar.css";
 import "./styles/components/shortcuts.css";
 import "./styles/components/ai-chat.css";
@@ -134,6 +136,8 @@ async function init() {
     renderFeedSidebar(settings);
     setFeedSettings(settings);
     renderFeedList();
+    setBriefingSettings(settings);
+    void initBriefing();
     setAISettings(settings);
     renderSettingsDrawer(settings);
 
@@ -232,6 +236,7 @@ async function init() {
       renderQuickLinks(settings);
       renderFeedSidebar(settings);
       setFeedSettings(settings);
+      setBriefingSettings(settings);
       setAISettings(settings);
       renderSettingsDrawer(settings);
 

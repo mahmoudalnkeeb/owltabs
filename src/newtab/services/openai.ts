@@ -1,5 +1,5 @@
 import type { AIConfig } from "../state/types";
-import { TOOL_DECLARATIONS, type GeminiMessage, type StreamMeta, type ToolCall } from "./gemini";
+import { TOOL_DECLARATIONS, type GeminiMessage, type StreamMeta, type StreamOptions, type ToolCall } from "./gemini";
 
 /**
  * Any OpenAI-compatible chat completions API: Groq, OpenRouter, Mistral,
@@ -99,6 +99,7 @@ export async function* streamOpenAI(
   meta?: StreamMeta,
   toolCalls?: ToolCall[],
   signal?: AbortSignal,
+  options: StreamOptions = {},
 ): AsyncGenerator<string> {
   const res = await fetch(openaiUrl(config.openaiBaseUrl, "chat/completions"), {
     method: "POST",
@@ -106,10 +107,10 @@ export async function* streamOpenAI(
     body: JSON.stringify({
       model: config.openaiModel,
       messages: toOpenAIMessages(messages, systemPrompt),
-      tools: TOOL_DECLARATIONS.map((fn) => ({ type: "function", function: fn })),
+      ...(options.tools === false ? {} : { tools: TOOL_DECLARATIONS.map((fn) => ({ type: "function", function: fn })) }),
       stream: true,
       // Roomier than Gemini's limit: reasoning models spend part of it thinking.
-      max_tokens: 2048,
+      max_tokens: options.maxTokens ?? 2048,
       temperature: 0.7,
     }),
     signal,
@@ -140,6 +141,8 @@ export async function* streamOpenAI(
         if (chunk.error) throw new OpenAIError(chunk.error.message ?? "Stream error", 0);
         if (chunk.id && meta) meta.interactionId = chunk.id;
 
+        const finish = chunk.choices?.[0]?.finish_reason;
+        if (finish && meta) meta.finishReason = finish;
         const delta = chunk.choices?.[0]?.delta;
         if (!delta) continue;
         if (typeof delta.content === "string" && delta.content) yield delta.content;
