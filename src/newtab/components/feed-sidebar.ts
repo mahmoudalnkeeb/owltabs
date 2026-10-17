@@ -48,6 +48,40 @@ function setFilter(filter: string): void {
   uiStore.set((s) => ({ ...s, activeFilter: filter }));
 }
 
+/** Points the reader at a feed or topic by name ("all", "saved", a feed label, or a topic). Returns the label shown, or null if nothing matched. */
+export function showSourceInReader(name: string): string | null {
+  const needle = name.trim().toLowerCase();
+  if (!needle || needle === "all") {
+    setFilter("all");
+    return "All articles";
+  }
+  if (needle === "saved") {
+    setFilter("saved");
+    return "Saved";
+  }
+  const items = feedStore.get();
+  const feed = items.find((i) => i.feedLabel.toLowerCase() === needle) ??
+    items.find((i) => i.feedLabel.toLowerCase().includes(needle));
+  if (feed) {
+    setFilter(FEED_PREFIX + feed.feedId);
+    return feed.feedLabel;
+  }
+  const topic = items.find((i) => i.feedCategory.toLowerCase() === needle);
+  if (topic) {
+    setFilter(topic.feedCategory);
+    return topicLabel(topic.feedCategory);
+  }
+  return null;
+}
+
+/** Sets the reader's search, keeping the search box in step. */
+export function setFeedSearch(query: string): void {
+  if (!query.trim()) return clearFeedSearch();
+  uiStore.set((s) => ({ ...s, feedSearchQuery: query.trim() }));
+  const input = document.getElementById("nt-search-input") as HTMLInputElement | null;
+  if (input) input.value = query.trim();
+}
+
 function filterExists(filter: string, s: SyncStorageSettings): boolean {
   if (filter === "all" || filter === "saved") return true;
   if (filter.startsWith(FEED_PREFIX)) {

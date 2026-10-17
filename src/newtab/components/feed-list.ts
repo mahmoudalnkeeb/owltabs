@@ -322,7 +322,10 @@ async function runAction(row: HTMLElement, action: RowAction): Promise<void> {
         showToast("Turn on AI in Settings first", "red");
         return;
       }
-      triggerAI(`Summarize this article: ${item.title}`);
+      triggerAI(
+        `Summarize this article (ID:${item.id}): "${item.title}". Read its full text first, then give the key points and why it matters.`,
+        `Summarize “${item.title}”`,
+      );
       return;
     }
     case "toggle-read": {

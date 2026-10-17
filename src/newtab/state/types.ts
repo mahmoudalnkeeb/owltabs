@@ -100,9 +100,11 @@ export interface ChatMessage {
 }
 
 export interface AIResponseBlock {
-  type: "user" | "text" | "cards" | "streaming";
+  type: "user" | "text" | "cards" | "streaming" | "error";
   content: string;
   cardIds?: string[];
+  /** The answer's markdown, for Copy. */
+  raw?: string;
 }
 
 export interface LocalStorageCache {

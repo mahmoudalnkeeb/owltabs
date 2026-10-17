@@ -42,8 +42,26 @@
   border-bottom: 1px solid var(--border-subtle);
 }
 
+.ai-chat-heading {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  margin-right: auto;
+}
+.ai-chat-model {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-left: 22px;
+  font: 400 0.6875rem/1.2 var(--font-mono);
+  color: var(--text-tertiary);
+}
+.ai-chat-model:empty {
+  display: none;
+}
+
 .ai-chat-title {
-  margin: 0 auto 0 0;
+  margin: 0;
   display: inline-flex;
   align-items: center;
   gap: var(--sp-2);
@@ -95,7 +113,17 @@
 
 .ai-empty-state {
   display: grid;
+  justify-items: start;
   gap: var(--sp-3);
+}
+.ai-empty-mark {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-md);
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 
 .ai-empty-state h3 {
@@ -125,9 +153,11 @@
   background: var(--accent-softer);
   border: 1px solid var(--accent-soft);
   border-radius: var(--r-md) var(--r-md) 2px var(--r-md);
-  padding: var(--sp-3) var(--sp-4);
+  padding: 10px var(--sp-4);
   max-width: 85%;
-  font-size: 0.84375rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
   color: var(--text-primary);
   overflow-wrap: anywhere;
 }
@@ -169,6 +199,96 @@
 
 .ai-block--text strong {
   color: var(--text-primary);
+}
+
+.ai-block--text a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: var(--accent-border);
+  text-underline-offset: 2px;
+}
+.ai-block--text a:hover {
+  text-decoration-color: var(--accent);
+}
+
+.ai-muted {
+  color: var(--text-tertiary);
+}
+.ai-note {
+  margin-top: var(--sp-2);
+  font-size: 0.8125rem;
+  font-style: italic;
+}
+
+/* ── Answer actions: Copy, Regenerate ── */
+
+.ai-actions {
+  display: flex;
+  gap: 2px;
+  margin-top: var(--sp-2);
+  margin-left: -6px;
+  opacity: 0.55;
+  transition: opacity var(--dur-fast);
+}
+.ai-block--text:hover .ai-actions,
+.ai-actions:focus-within {
+  opacity: 1;
+}
+.ai-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-tertiary);
+  font: 500 0.75rem/1 var(--font-sans);
+  cursor: pointer;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+.ai-action:hover,
+.ai-action:focus-visible {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+  outline: none;
+}
+.ai-action.is-done {
+  color: var(--mint);
+}
+
+/* ── Errors ── */
+
+.ai-error {
+  box-sizing: border-box;
+  display: flex;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid color-mix(in srgb, var(--red) 30%, var(--border-default));
+  border-radius: var(--r-md);
+  background: var(--red-softer);
+}
+.ai-error-icon {
+  flex: 0 0 auto;
+  padding-top: 2px;
+  color: var(--red);
+}
+.ai-error-body {
+  display: grid;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+.ai-error-body p {
+  margin: 0;
+  font-size: 0.84375rem;
+  line-height: 1.55;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+.ai-error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
 }
 
 .ai-block--text h1,
@@ -253,11 +373,6 @@
   outline: none;
 }
 
-.ai-chat-input:disabled {
-  opacity: 0.7;
-  cursor: progress;
-}
-
 .ai-chat-input::placeholder {
   color: var(--text-tertiary);
 }
@@ -271,21 +386,113 @@
   flex: 0 0 auto;
 }
 
-.ai-chat-send:disabled {
-  opacity: 0.75;
-  cursor: progress;
+.ai-chat-send.is-stop {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+.ai-chat-send.is-stop:hover {
+  background: var(--surface-selected);
+}
+
+.ai-chat-composer:focus-within {
+  border-color: var(--accent-border);
+}
+
+.ai-chat-hint {
+  display: flex;
+  gap: var(--sp-3);
+  margin-top: var(--sp-2);
+  padding: 0 var(--sp-2);
+  font-size: 0.6875rem;
+  color: var(--text-tertiary);
+}
+.ai-chat-hint span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.ai-chat-hint kbd {
+  padding: 1px 4px;
+  font-size: 0.625rem;
 }
 
 /* ── Quick prompts ── */
 
 .ai-quick-prompts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
+  display: grid;
+  gap: 6px;
+  width: 100%;
   margin-top: var(--sp-1);
+}
+.ai-prompt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: 10px var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  font: 500 0.84375rem/1.3 var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast);
+}
+.ai-prompt svg {
+  flex: 0 0 auto;
+  color: var(--text-tertiary);
+  transition: transform var(--dur-fast), color var(--dur-fast);
+}
+.ai-prompt:hover,
+.ai-prompt:focus-visible {
+  border-color: var(--accent-border);
+  background: var(--accent-softer);
+  color: var(--text-primary);
+  outline: none;
+}
+.ai-prompt:hover svg,
+.ai-prompt:focus-visible svg {
+  color: var(--accent);
+  transform: translateX(2px);
 }
 
 /* ── Thinking state ── */
+
+/* What the assistant did before answering (beats the answer's own list styles) */
+.ai-block--text .ai-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 var(--sp-3);
+  padding: 0;
+  list-style: none;
+}
+.ai-block--text .ai-steps li {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  padding: 3px 9px 3px 7px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-full);
+  background: var(--surface-1);
+  color: var(--text-tertiary);
+  font-size: 0.75rem;
+  line-height: 1.3;
+}
+.ai-steps li span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ai-steps svg {
+  flex: 0 0 auto;
+  color: var(--mint);
+}
 
 .ai-thinking {
   display: inline-flex;
@@ -301,15 +508,6 @@
   border-radius: var(--r-full);
   background: var(--accent);
   animation: aiPulse 900ms ease-in-out infinite;
-}
-
-.ai-send-spinner {
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(0, 0, 0, 0.2);
-  border-top-color: currentColor;
-  border-radius: var(--r-full);
-  animation: aiSpin 750ms linear infinite;
 }
 
 /* ── Streaming cursor ── */
@@ -332,6 +530,3 @@
   50% { opacity: 1; transform: scale(1); }
 }
 
-@keyframes aiSpin {
-  to { transform: rotate(360deg); }
-}
